@@ -15,7 +15,7 @@ class TestNumerals(unittest.TestCase):
 
     def test_numerals(self):
         parser = NumeralParser()
-        with open(os.path.join(os.path.dirname(__file__), 'numerals.csv')) as numerals:
+        with open(os.path.join(os.path.dirname(__file__), 'hebrew_numerals.csv')) as numerals:
             reader = csv.reader(numerals)
             for row in reader:
                 [text, expected] = row

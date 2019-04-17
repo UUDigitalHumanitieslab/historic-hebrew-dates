@@ -5,7 +5,7 @@ import re
 
 class NumeralParser:
     def __init__(self):
-        with open(os.path.join(os.path.dirname(__file__), 'numeral_patterns.csv')) as patterns:
+        with open(os.path.join(os.path.dirname(__file__), 'hebrew_numerals.csv')) as patterns:
             reader = csv.reader(patterns)
             next(reader)  # skip header
 
@@ -56,24 +56,22 @@ class NumeralParser:
                     matching_pattern += pattern[last_pos:]
 
                     grouped_patterns[pattern_type][i] = (
-                        named_pattern, expression)
-                    parse_patterns.append((named_pattern, expression))
+                        re.compile(named_pattern), expression)
+                    parse_patterns.append((re.compile(named_pattern), expression))
+
                     patterns.append(matching_pattern)
                     all_patterns.append(matching_pattern)
                 pattern_type_expressions[pattern_type] = f"({'|'.join(patterns)})"
 
         self.parse_patterns = parse_patterns
         self.grouped_patterns = grouped_patterns
-        # TODO: this could include the pattern type (group for every type)
-        # that way parsing a match should be easier and quicker
         self.search_pattern = f"({'|'.join(all_patterns)})"
 
     def parse_numeral(self, text, patterns=None):
         if patterns is None:
             patterns = self.parse_patterns
         for (pattern, expression) in patterns:
-            # TODO: pre-compile patterns?
-            match = re.match(pattern, text)
+            match = pattern.match(text)
             if match:
                 for group in re.finditer('\{(?P<group>[^\}]+)\}', expression):
                     group_name = group['group']
