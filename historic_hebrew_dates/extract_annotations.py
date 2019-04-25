@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 import re
 from bidi.algorithm import get_display
-from googletrans import Translator
-from pyparsing import nestedExpr
-translator = Translator()
+# from googletrans import Translator
+# from pyparsing import nestedExpr
+# translator = Translator()
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -68,13 +68,10 @@ excel_df['Age_annotation'] = excel_df['Transcription'].str.extract(
 # print a bit
 # print(excel_df['Age_annotation'].head())
 
-out = excel_df['Date_annotation'][0]
+# out = excel_df['Date_annotation'][0]
 # print(out)
 # nested = nestedExpr('{', '}').parseString(out).asList()
 # print(nested)
 
-sub_pat = r"(\w+)(\})(\(.+\))"
-subbed = re.sub(sub_pat, r"\1\3\2", out)
-
-print(out)
-print(subbed)
+# sub_pat = r"(\w+)(\})(\(.+\))"
+# subbed = re.sub(sub_pat, r"\1\3\2", out)
