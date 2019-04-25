@@ -103,8 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# IDE
-.vscode
-
-# MacOS
+# macos
 .DS_Store
+
+# IDE
+.vscode/
+
+# other
+*.xlsx
