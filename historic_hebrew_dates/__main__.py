@@ -18,9 +18,8 @@ def main(args=None):
     evaluated = parser.evaluate_expression(expression)
     print(evaluated)
 
-    c = AnnotatedCorpus(
-        '/Users/3248526/git/historic-hebrew-dates/golden-standard/Inscription DB for Time Project.xlsx')
-    print(c.as_infixed()['Transcription'].head())
+    c = AnnotatedCorpus()
+    print(c.parsed.loc[0])  # print the first entry of the parsed dataframe
 
 
 if __name__ == "__main__":
