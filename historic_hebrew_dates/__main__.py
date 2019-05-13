@@ -12,11 +12,12 @@ def main(args=None):
         args = sys.argv[1:]
 
     text = ' '.join(args)
-    parser = NumeralParser()
-    expression = parser.parse_numeral(text)
-    print(expression)
-    evaluated = parser.evaluate_expression(expression)
-    print(evaluated)
+    if text:
+        parser = NumeralParser()
+        expression = parser.parse_numeral(text)
+        print(expression)
+        evaluated = parser.evaluate_expression(expression)
+        print(evaluated)
 
     c = AnnotatedCorpus()
     print(c.parsed.loc[0])  # print the first entry of the parsed dataframe
