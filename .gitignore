@@ -103,7 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# custom
-*.xlsx
-.DS_STORE
+# macOS
+.DS_Store
+
+# IDE
 .vscode/
+
+# other
+*.xlsx
