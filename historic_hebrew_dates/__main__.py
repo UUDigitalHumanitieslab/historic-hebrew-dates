@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
-from .numeral_parser import NumeralParser
 from .annotation_parser import AnnotatedCorpus
+from .numeral_parser import NumeralParser
 
 
 def main(args=None):
@@ -20,7 +20,7 @@ def main(args=None):
         print(evaluated)
 
     c = AnnotatedCorpus()
-    print(c.parsed.loc[0])  # print the first entry of the parsed dataframe
+    # print(c.parsed.loc[0])  # print the first entry of the parsed dataframe
 
 
 if __name__ == "__main__":
