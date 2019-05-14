@@ -19,7 +19,7 @@ class TestNumerals(unittest.TestCase):
             reader = csv.reader(numerals)
             for row in reader:
                 [text, expected] = row
-                parsed = parser.parse_numeral(text)
+                parsed = parser.parse(text)
                 if not parsed:
                     self.fail(f'Parse failed for: {text}, expected: {expected}')
                 else:
