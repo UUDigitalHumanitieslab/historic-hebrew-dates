@@ -3,36 +3,38 @@ import csv
 import os
 import re
 
+from typing import Dict, Iterator, List, Tuple, Pattern, Optional
+
 class NumeralParser:
     def __init__(self):
         with open(os.path.join(os.path.dirname(__file__), 'hebrew_numerals.csv')) as patterns:
             reader = csv.reader(patterns)
             next(reader)  # skip header
 
-            grouped_patterns = {}
+            grouped_patterns: Dict[str, List[Tuple[Pattern, str]]] = {}
             # Start with terminal expression, make sure patterns only
             # rely on preceding types: that way a pattern for the entire
             # dependent type can be constructed first and used in the following
             # types.
-            pattern_type_order = []
+            pattern_type_order: List[str] = []
             for row in reader:
-                pattern_type = row[0]
-                pattern = row[1].replace(' ', ' *')
-                expression = row[2]
+                pattern_type: str = row[0]
+                pattern: str = row[1].replace(' ', ' *')
+                expression: str = row[2]
                 if not pattern_type in pattern_type_order:
                     pattern_type_order.append(pattern_type)
                 if not pattern_type in grouped_patterns:
                     grouped_patterns[pattern_type] = []
                 grouped_patterns[pattern_type].append((pattern, expression))
 
-            all_patterns = []
-            parse_patterns = []
+            all_patterns: List[str] = []
+            parse_patterns: List[Tuple[Pattern, str]] = []
 
             # Expressions matching an entire pattern type
             pattern_type_expressions = {}
 
             for pattern_type in pattern_type_order:
-                patterns = []
+                patterns: List[str] = []
                 for i, (pattern, expression) in enumerate(grouped_patterns[pattern_type]):
                     named_pattern = r'^'
                     matching_pattern = ''
@@ -41,7 +43,7 @@ class NumeralParser:
                         (start, end) = sub_pattern.span()
                         named_pattern += pattern[last_pos:start]
 
-                        sub_type = sub_pattern.groupdict()['name']
+                        sub_type: str = sub_pattern.groupdict()['name']
                         if re.match(r'\d+', sub_type):
                             sub_type_expression = f"({'|'.join(all_patterns)})"
                             named_pattern += f'(?P<g{sub_type}>{sub_type_expression})'
@@ -67,7 +69,7 @@ class NumeralParser:
         self.grouped_patterns = grouped_patterns
         self.search_pattern = f"({'|'.join(all_patterns)})"
 
-    def parse_numeral(self, text, patterns=None):
+    def parse_numeral(self, text: str, patterns: Optional[List[Tuple[Pattern, str]]]=None) -> Optional[str]:
         if patterns is None:
             patterns = self.parse_patterns
         for (pattern, expression) in patterns:
@@ -81,15 +83,19 @@ class NumeralParser:
                     else:                    
                         sub_patterns = self.grouped_patterns[group_name]
                         sub_text = match[group_name]
+                    numeral = self.parse_numeral(
+                            sub_text, 
+                            sub_patterns)
+                    if numeral is None:
+                        return None
                     expression = re.sub(
                         '\{' + group_name + '\}',
-                        self.parse_numeral(
-                            sub_text, 
-                            sub_patterns),
+                        numeral,
                         expression)
                 return expression
+        return None
 
-    def evaluate_expression(self, expression):
+    def evaluate_expression(self, expression: str) -> int:
         last_index = 0
         evaluated_expression = ''
         for left, right, start, end in self.get_operators('*', expression):
@@ -108,9 +114,9 @@ class NumeralParser:
         else:
             return self.evaluate_expression(expression)
 
-    def get_operators(self, operator, expression):
+    def get_operators(self, operator: str, expression: str) -> Iterator[Tuple[int, int, int, int]]:
         for match in re.finditer(f'(?P<left>\d+)\{operator}(?P<right>\d+)', expression):
             yield (int(match['left']), int(match['right']), match.start(), match.end())
 
-    def replace_string_part(self, text, start, end, replacement):
+    def replace_string_part(self, text: str, start: int, end: int, replacement: str) -> str:
         return text[:start] + replacement + text[end:]
