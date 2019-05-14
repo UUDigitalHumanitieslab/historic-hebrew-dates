@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/UUDigitalHumanitieslab/historic-hebrew-dates.svg?token=gbE1yWiPSuz64uDZEWzs&branch=develop)](https://travis-ci.com/UUDigitalHumanitieslab/historic-hebrew-dates)
+
 # Historic Hebrew Dates
 Python library and console application for extracting Hebrew and Aramaic dates from historic texts.
 
