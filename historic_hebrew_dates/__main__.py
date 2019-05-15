@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import re
-from .numeral_parser import NumeralParser
 from .annotation_parser import AnnotatedCorpus
+from .numeral_parser import NumeralParser
 
 
 def main(args=None):
