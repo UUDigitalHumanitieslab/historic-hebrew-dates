@@ -8,7 +8,9 @@ from typing import Dict, Iterator, List, Tuple, Pattern, Optional
 class PatternParser:
     def __init__(self, filename: str, type: str, child_patterns = []):
         self.type = type
-        self.child_patterns: List[PatternParser] = child_patterns
+        self.child_patterns: Dict[str, PatternParser] = {
+            key:value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
+        }
         with open(os.path.join(os.path.dirname(__file__), 'patterns', filename)) as patterns:
             reader = csv.reader(patterns)
             next(reader)  # skip header
@@ -48,15 +50,16 @@ class PatternParser:
                         (start, end) = sub_pattern.span()
                         named_pattern += pattern[last_pos:start]
 
-                        sub_type: str = sub_pattern.groupdict()['name']
+                        var_name, sub_type = self.get_group_name_parts(sub_pattern.groupdict()['name'])
+
                         if re.match(r'\d+', sub_type):
                             # a number means: include all preceding patterns
                             sub_type_expression = f"({'|'.join(all_patterns)})"
-                            named_pattern += f'(?P<g{sub_type}>{sub_type_expression})'
+                        elif sub_type in self.child_patterns:
+                            sub_type_expression = self.child_patterns[sub_type].search_pattern
                         else:
-                            # TODO: use child_patterns if available
                             sub_type_expression = pattern_type_expressions[sub_type]
-                            named_pattern += f'(?P<{sub_type}>{sub_type_expression})'
+                        named_pattern += f'(?P<{self.get_group_name(var_name, sub_type)}>{sub_type_expression})'
 
                         matching_pattern += pattern[last_pos:start]
                         matching_pattern += sub_type_expression
@@ -83,21 +86,47 @@ class PatternParser:
             match = pattern.match(text)
             if match:
                 for group in re.finditer('\{(?P<group>[^\}]+)\}', expression):
-                    group_name = group['group']
-                    if re.match(r'\d+', group_name):
+                    var_name, sub_type = self.get_group_name_parts(group['group'])
+                    sub_text = match[self.get_group_name(var_name, sub_type)]
+                    if re.match(r'\d+', sub_type):
                         sub_patterns = None
-                        sub_text = match['g' + group_name]
-                    else:                    
-                        sub_patterns = self.grouped_patterns[group_name]
-                        sub_text = match[group_name]
+                    elif sub_type in self.child_patterns:
+                        return self.child_patterns[sub_type].parse(sub_text)
+                    else:
+                        sub_patterns = self.grouped_patterns[sub_type]
                     numeral = self.parse(
                             sub_text, 
                             sub_patterns)
                     if numeral is None:
                         return None
                     expression = re.sub(
-                        '\{' + group_name + '\}',
+                        '\{' + group['group'] + '\}',
                         numeral,
                         expression)
                 return expression
         return None
+
+    def get_group_name_parts(self, group_name: str):
+        """
+        Get the variable name and sub_type of a named group expression.
+        """
+        name_parts: List[str] = group_name.split(':')
+        if len(name_parts) == 2:
+            var_name = name_parts[0]
+            sub_type = name_parts[1]
+        else:
+            var_name = sub_type = name_parts[0]
+
+        if ('_' in var_name) or ('_' in sub_type):
+            raise "Underscores aren't allowed in sub-pattern identifiers."
+
+        return var_name, sub_type
+
+    def get_group_name(self, var_name, sub_type):
+        if re.match(r'\d+', sub_type):
+            # a number means: include all preceding patterns
+            # prefix with g because named groups in regex aren't allowed
+            # to start with a digit
+            return f'g{var_name}__{sub_type}'
+        else:
+            return f'{var_name}__{sub_type}'
