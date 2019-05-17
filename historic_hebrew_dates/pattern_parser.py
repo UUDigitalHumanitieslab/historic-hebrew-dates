@@ -3,6 +3,7 @@ import csv
 import os
 import re
 
+from collections import ChainMap
 from typing import Dict, Iterator, List, Tuple, Pattern, Optional
 
 class PatternParser:
@@ -11,8 +12,8 @@ class PatternParser:
         self.child_patterns: Dict[str, PatternParser] = {
             key:value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
         }
-        with open(os.path.join(os.path.dirname(__file__), 'patterns', filename)) as patterns:
-            reader = csv.reader(patterns)
+        with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf8') as patterns:
+            reader = csv.reader(patterns, delimiter=',', quotechar='"')
             next(reader)  # skip header
 
             grouped_patterns_str: Dict[str, List[Tuple[str, str]]] = {}
@@ -85,23 +86,35 @@ class PatternParser:
         for (pattern, expression) in patterns:
             match = pattern.match(text)
             if match:
-                for group in re.finditer('\{(?P<group>[^\}]+)\}', expression):
-                    var_name, sub_type = self.get_group_name_parts(group['group'])
-                    sub_text = match[self.get_group_name(var_name, sub_type)]
-                    if re.match(r'\d+', sub_type):
+                var_parts = ((self.get_var_name(group_name), value) for group_name, value in match.groupdict().items())
+                var_values = {
+                    parts[0]: (value, parts[1])
+                    for parts, value in var_parts
+                }
+                for group in re.finditer('\{(?P<var>[^\}]+)\}', expression):
+                    var_name = group['var']
+                    backref = re.match(r'^\d+$', var_name)
+                    try:
+                        sub_text, sub_type = var_values[f'g{var_name}' if backref else var_name]
+                    except:
+                        print(var_values)
+                        raise IndexError(f"{expression} {var_name}")
+                    sub_parse = None
+                    if backref:
                         sub_patterns = None
                     elif sub_type in self.child_patterns:
-                        return self.child_patterns[sub_type].parse(sub_text)
+                        sub_parse = self.child_patterns[sub_type].parse(sub_text)
                     else:
                         sub_patterns = self.grouped_patterns[sub_type]
-                    numeral = self.parse(
+                    if sub_parse is None:
+                        sub_parse = self.parse(
                             sub_text, 
                             sub_patterns)
-                    if numeral is None:
+                    if sub_parse is None:
                         return None
                     expression = re.sub(
-                        '\{' + group['group'] + '\}',
-                        numeral,
+                        '\{' + group['var'] + '\}',
+                        sub_parse,
                         expression)
                 return expression
         return None
@@ -122,7 +135,10 @@ class PatternParser:
 
         return var_name, sub_type
 
-    def get_group_name(self, var_name, sub_type):
+    def get_group_name(self, var_name: str, sub_type: str):
+        """
+        Gets the group name to use for a named group expression.
+        """
         if re.match(r'\d+', sub_type):
             # a number means: include all preceding patterns
             # prefix with g because named groups in regex aren't allowed
@@ -130,3 +146,10 @@ class PatternParser:
             return f'g{var_name}__{sub_type}'
         else:
             return f'{var_name}__{sub_type}'
+
+    def get_var_name(self, group_name: str):
+        """
+        Gets the variable names from the named groups.
+        """
+        skip_first = 1 if re.match(r'\d+', group_name) else 0
+        return group_name[skip_first:].split('__')

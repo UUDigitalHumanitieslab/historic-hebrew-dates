@@ -20,7 +20,7 @@ def main(args=None):
             parser = NumeralParser()
             expression = parser.parse_numeral(text)
             print(expression)
-            evaluated = parser.evaluate_expression(expression)
+            evaluated = parser.eval(expression)
             print(evaluated)
 
 def initial_patterns():

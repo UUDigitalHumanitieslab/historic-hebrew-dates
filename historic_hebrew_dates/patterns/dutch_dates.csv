@@ -1,0 +1,13 @@
+﻿type,pattern,value
+1,{dag:nummer} januari {jaar:nummer},"[dag: '{dag}', maand: 1, jaar: '{jaar}']"
+2,{dag:nummer} februari {jaar:nummer},"[dag: '{dag}', maand: 2, jaar: '{jaar}']"
+3,{dag:nummer} maart {jaar:nummer},"[dag: '{dag}', maand: 3, jaar: '{jaar}']"
+4,{dag:nummer} april {jaar:nummer},"[dag: '{dag}', maand: 4, jaar: '{jaar}']"
+5,{dag:nummer} mei {jaar:nummer},"[dag: '{dag}', maand: 5, jaar: '{jaar}']"
+6,{dag:nummer} juni {jaar:nummer},"[dag: '{dag}', maand: 6, jaar: '{jaar}']"
+7,{dag:nummer} juli {jaar:nummer},"[dag: '{dag}', maand: 7, jaar: '{jaar}']"
+8,{dag:nummer} augustus {jaar:nummer},"[dag: '{dag}', maand: 8, jaar: '{jaar}']"
+9,{dag:nummer} september {jaar:nummer},"[dag: '{dag}', maand: 9, jaar: '{jaar}']"
+10,{dag:nummer} oktober {jaar:nummer},"[dag: '{dag}', maand: 10, jaar: '{jaar}']"
+11,{dag:nummer} november {jaar:nummer},"[dag: '{dag}', maand: 11, jaar: '{jaar}']"
+12,{dag:nummer} december {jaar:nummer},"[dag: '{dag}', maand: 12, jaar: '{jaar}']"
