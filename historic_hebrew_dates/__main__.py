@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import re
-from .annotation_parser import AnnotatedCorpus
+from .annotated_corpus import AnnotatedCorpus
 from .numeral_parser import NumeralParser
 
 
@@ -18,7 +18,7 @@ def main(args=None):
             initial_patterns()
         else:
             parser = NumeralParser()
-            expression = parser.parse_numeral(text)
+            expression = parser.parse(text)
             print(expression)
             evaluated = parser.eval(expression)
             print(evaluated)
