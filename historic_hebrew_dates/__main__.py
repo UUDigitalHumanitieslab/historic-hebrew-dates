@@ -25,9 +25,7 @@ def main(args=None):
 
 def initial_patterns():
     c = AnnotatedCorpus()
-    for p in zip(c.parsed.loc[:, 'Type'], c.parsed.loc[:, 'T_date_type']):
-        if p[0] != None and p[1] != None:
-            print(f'{p[0]},{p[1]}')
+    print(c.write_patterns())
 
 
 if __name__ == "__main__":

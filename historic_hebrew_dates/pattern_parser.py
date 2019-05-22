@@ -131,7 +131,7 @@ class PatternParser:
             var_name = sub_type = name_parts[0]
 
         if ('_' in var_name) or ('_' in sub_type):
-            raise "Underscores aren't allowed in sub-pattern identifiers."
+            raise Exception("Underscores aren't allowed in sub-pattern identifiers.")
 
         return var_name, sub_type
 

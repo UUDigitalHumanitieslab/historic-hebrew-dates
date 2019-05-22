@@ -13,8 +13,8 @@ class TestAnnotationParser(unittest.TestCase):
 
         self.assertListEqual(
             patterns,
-            [('datum', '{dag:nummer}e van de maand {maand} in het jaar {jaar:nummer}'),
-             ('dag', '22'),
-             ('maand', 'mei'),
-             ('jaar', '2019')]
+            [('datum', 'datum', 'datum', '{dag:nummer}e van de maand {maand} in het jaar {jaar:nummer}'),
+             ('datum', 'dag', 'nummer', '22'),
+             ('datum', 'maand', 'maand', 'mei'),
+             ('datum', 'jaar', 'nummer', '2019')]
         )

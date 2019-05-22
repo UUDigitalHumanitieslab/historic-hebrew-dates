@@ -3,6 +3,7 @@ import re
 import yaml
 
 from .date_type_parser import DateTypeParser
+from .month_parser import MonthParser
 from .pattern_parser import PatternParser
 from .numeral_parser import NumeralParser
 from typing import Dict, Iterator, Tuple
@@ -11,7 +12,7 @@ class DateParser(PatternParser):
     def __init__(self, lang='hebrew'):
         self.numeral_parser = NumeralParser(lang=lang)
         if lang == 'hebrew':
-            super().__init__('hebrew_dates.csv', 'תאריך', [DateTypeParser(), self.numeral_parser])
+            super().__init__('hebrew_dates.csv', 'תאריך', [DateTypeParser(), MonthParser(), self.numeral_parser])
             self.number_keys = ['שנה']
         elif lang == 'dutch':
             super().__init__('dutch_dates.csv', 'datum', [self.numeral_parser])

@@ -1,5 +1,5 @@
 import re
-from typing import Dict
+from typing import Dict, List, Union
 
 tokens = (
     'WORD',
@@ -13,12 +13,12 @@ t_LBRACE = r'\{'
 t_RBRACE = r'\}'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
-t_WORD = r'[\w \t\n\\.]+'
+t_WORD = r'[\w \t\n\.\*]+'
 
-t_ignore = "\r[]><"
+t_ignore = "\r[]><,?/:'"
 
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    raise Exception("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 # Build the lexer
@@ -53,14 +53,14 @@ def p_words(p):
         p[0] = { 'words': [p[1]] + p[2]['words'] }
 
 def p_error(p):
-    print("Syntax error at '%s'" % p.value)
+    raise Exception("Syntax error at '%s'" % p.value)
 
 import ply.yacc as yacc
 parser = yacc.yacc()
 
 def word_to_pattern(word: str):
     word = re.sub(r'[ \t\n]+', ' ', word)
-    return re.sub(r'\\.+', '\\w*', word)
+    return re.sub(r'[\*\.]+', '\\\\w*', word)
 
 def expression_to_pattern(expression, tag_types: Dict[str, str]):
     for part in expression:
@@ -73,16 +73,28 @@ def expression_to_pattern(expression, tag_types: Dict[str, str]):
         elif 'words' in part:
             yield from map(word_to_pattern, part['words'])
 
-def get_patterns_from_parse(parse, tag_types: Dict[str, str]):
+def get_patterns_from_parse(parse, tag_types: Dict[str, str]) -> List[Union[str, str, str, str]]:
     patterns = []
 
     for expression in parse:
         if 'tag' in expression:
             annotation_expression = expression['expression']
+            tag = expression['tag']
+            if tag in tag_types:
+                tag_type = tag_types[tag]
+            else:
+                tag_type = tag
             patterns += [(
-                expression['tag'],
-                ''.join(expression_to_pattern(annotation_expression, tag_types)))]
-            patterns += get_patterns_from_parse(annotation_expression, tag_types)
+                tag,
+                tag,
+                tag_type,
+                ''.join(expression_to_pattern(annotation_expression, tag_types)).strip())]
+
+            # store the context to disambiguate year of age, and of dates
+            context = tag
+            patterns += list(map(
+                lambda item: (context, item[1], item[2], item[3]), 
+                get_patterns_from_parse(annotation_expression, tag_types)))
 
     return patterns
 
