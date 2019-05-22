@@ -20,7 +20,7 @@ class DateParser(PatternParser):
             raise f'Unknown language {lang}'
 
     def eval(self, expression: str) -> Dict:
-        values: Dict[str, str] = yaml.load('{' + expression[1:-1] + '}')
+        values: Dict[str, str] = yaml.safe_load('{' + expression[1:-1] + '}')
 
         for key, value in values.items():
             if key in self.number_keys:

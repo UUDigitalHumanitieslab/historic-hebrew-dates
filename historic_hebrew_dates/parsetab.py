@@ -6,7 +6,7 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'LBRACE LPAREN RBRACE RPAREN WORDexpression : words\n                  | annotation\n                  | words annotation\n                  | words annotation expression\n                  | annotation expressionannotation : LBRACE expression RBRACE LPAREN WORD RPARENwords : WORD\n             | WORD words'
+_lr_signature = 'LBRACE LPAREN RBRACE RPAREN WORDexpression : words\n                  | annotation\n                  | words annotationexpression : words annotation expression\n                  | annotation expressionannotation : LBRACE expression RBRACE LPAREN WORD RPARENwords : WORD\n             | WORD words'
     
 _lr_action_items = {'WORD':([0,3,4,5,6,12,14,],[4,4,4,4,4,13,-6,]),'LBRACE':([0,2,3,4,5,6,8,14,],[5,5,5,-7,5,5,-8,-6,]),'$end':([1,2,3,4,6,7,8,10,14,],[0,-1,-2,-7,-3,-5,-8,-4,-6,]),'RBRACE':([2,3,4,6,7,8,9,10,14,],[-1,-2,-7,-3,-5,-8,11,-4,-6,]),'LPAREN':([11,],[12,]),'RPAREN':([13,],[14,]),}
 
@@ -30,9 +30,9 @@ _lr_productions = [
   ('expression -> words','expression',1,'p_expression','annotation_parser.py',28),
   ('expression -> annotation','expression',1,'p_expression','annotation_parser.py',29),
   ('expression -> words annotation','expression',2,'p_expression','annotation_parser.py',30),
-  ('expression -> words annotation expression','expression',3,'p_expression','annotation_parser.py',31),
-  ('expression -> annotation expression','expression',2,'p_expression','annotation_parser.py',32),
-  ('annotation -> LBRACE expression RBRACE LPAREN WORD RPAREN','annotation',6,'p_annotation','annotation_parser.py',36),
-  ('words -> WORD','words',1,'p_words','annotation_parser.py',43),
-  ('words -> WORD words','words',2,'p_words','annotation_parser.py',44),
+  ('expression -> words annotation expression','expression',3,'p_expression_multiple','annotation_parser.py',34),
+  ('expression -> annotation expression','expression',2,'p_expression_multiple','annotation_parser.py',35),
+  ('annotation -> LBRACE expression RBRACE LPAREN WORD RPAREN','annotation',6,'p_annotation','annotation_parser.py',40),
+  ('words -> WORD','words',1,'p_words','annotation_parser.py',47),
+  ('words -> WORD words','words',2,'p_words','annotation_parser.py',48),
 ]

@@ -42,7 +42,7 @@ class TestNumerals(unittest.TestCase):
                     if not expression:
                         self.fail(f'Parse failed for: {text}, expected: {expected}')
                     else:
-                        self.assertDictEqual(yaml.load(expected), parser.eval(expression),
+                        self.assertDictEqual(yaml.safe_load(expected), parser.eval(expression),
                             text)
             if skipped > 0:
                 print(f'SKIPPED {skipped} rows for {lang}!')

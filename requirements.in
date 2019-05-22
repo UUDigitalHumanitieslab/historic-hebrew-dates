@@ -3,3 +3,4 @@ xlrd
 python-bidi
 mypy
 ply
+pyyaml
