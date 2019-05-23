@@ -10,7 +10,7 @@ import yaml
 from historic_hebrew_dates.date_parser import DateParser
 from historic_hebrew_dates.date_type_parser import DateTypeParser
 
-class TestNumerals(unittest.TestCase):
+class TestDates(unittest.TestCase):
     """
     Unit test class.
     """
