@@ -13,7 +13,6 @@ export class AppComponent {
   patternType: string;
 
   select(selection: LanguageSelection<Language>) {
-    console.log(selection);
     this.language = selection.language;
     this.patternType = selection.patternType;
   }
