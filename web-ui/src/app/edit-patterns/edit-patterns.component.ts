@@ -1,6 +1,15 @@
 import { Component, OnChanges, Input } from '@angular/core';
+
 import { ApiService } from '../api.service';
-import { Language , LanguagePattern} from '../patterns.service';
+import { Language, LanguagePattern } from '../patterns.service';
+
+interface Pattern {
+  [field: string]: {
+    value: string,
+    dir: 'ltr' | 'rtl',
+    modified: boolean
+  };
+}
 
 @Component({
   selector: 'dh-edit-patterns',
@@ -12,7 +21,7 @@ export class EditPatternsComponent implements OnChanges {
   @Input() patternType: LanguagePattern<Language>;
 
   cols: { header: string, field: string }[];
-  patterns: { [field: string]: { value: string, dir: 'ltr' | 'rtl' } }[];
+  patterns: Pattern[];
   constructor(private apiService: ApiService) { }
 
   async ngOnChanges() {
@@ -28,8 +37,19 @@ export class EditPatternsComponent implements OnChanges {
       ...Object.keys(cells).map(col => ({
         [col]: {
           value: cells[col],
-          dir: /[א-ת]/.test(cells[col]) ? 'rtl' : 'ltr'
+          dir: this.cellDirection(cells[col]),
+          modified: false
         }
       }))));
+  }
+
+  onCellChange(pattern: Pattern, column: string) {
+    const patternCell = pattern[column];
+    patternCell.dir = this.cellDirection(patternCell.value);
+    patternCell.modified = true;
+  }
+
+  private cellDirection(text: string) {
+    return /[א-ת]/.test(text) ? 'rtl' : 'ltr';
   }
 }

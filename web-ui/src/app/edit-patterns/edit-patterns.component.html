@@ -8,8 +8,15 @@
   </ng-template>
   <ng-template pTemplate="body" let-pattern>
     <tr>
-      <td *ngFor="let col of cols" [attr.dir]="pattern[col.field].dir">
-        {{pattern[col.field].value}}
+      <td *ngFor="let col of cols" [attr.dir]="pattern[col.field].dir" pEditableColumn [ngClass]="{'is-modified': pattern[col.field].modified}">
+        <p-cellEditor>
+          <ng-template pTemplate="input">
+            <input type="text" [(ngModel)]="pattern[col.field].value" required (change)="onCellChange(pattern, col.field)">
+          </ng-template>
+          <ng-template pTemplate="output">
+            {{pattern[col.field].value}}
+          </ng-template>
+        </p-cellEditor>
       </td>
     </tr>
   </ng-template>
