@@ -1,1 +1,5 @@
-/* You can add global styles to this file, and also import other style files */
+@import '~bulma/bulma';
+
+body .ui-table .ui-table-tbody > tr > td[dir="rtl"] {
+  text-align: right;
+}

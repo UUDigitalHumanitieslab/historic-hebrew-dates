@@ -21,7 +21,5 @@ install:
 script:
   - source .env/bin/activate
   - yarn
-  - yarn static-p
-  - find static
-  - yarn start-back-p &
+  - yarn start &
   - yarn test
