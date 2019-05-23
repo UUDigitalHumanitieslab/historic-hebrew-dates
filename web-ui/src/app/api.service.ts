@@ -2,6 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Language, LanguagePattern } from './patterns.service';
 
+export interface Parse {
+  expression: string;
+  evaluated: string;
+  error: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -20,5 +26,16 @@ export class ApiService {
     }
 
     return { fields, patterns };
+  }
+
+  async parse<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
+    lang: Lang,
+    patternType: PatternType,
+    input: string,
+    rows: string[][]) {
+    return this.httpClient.post<Parse>(`/api/parse/${lang}/${patternType}`, {
+      input,
+      rows
+    }).toPromise().catch(() => ({ expression: null, evaluated: null, error: true }));
   }
 }

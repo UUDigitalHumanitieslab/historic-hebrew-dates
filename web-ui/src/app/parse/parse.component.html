@@ -1,0 +1,16 @@
+﻿<form (ngSubmit)="tryParse()">
+  <div class="field has-addons">
+    <div class="control is-expanded">
+      <input class="input" type="text" name="value" [(ngModel)]="value" [attr.dir]="language == 'hebrew' ? 'rtl' : 'ltr'"/>
+    </div>
+    <div class="control">
+      <button class="button is-primary" type="submit" [ngClass]="{'is-loading': loading}">Parse</button>
+    </div>
+  </div>
+</form>
+<div class="notification" *ngIf="parse" [ngClass]="{'is-danger': parse.error}" [attr.dir]="parse.dir">
+  <span *ngIf="parse.expression; else emptyParse">
+    <span title="expression value">{{parse.expression}}</span> {{parse.dir == 'ltr' ? '→' : '←' }} <span title="evaluated">{{parse.evaluated}}</span>
+  </span>
+  <ng-template #emptyParse>No pattern matched!</ng-template>
+</div>

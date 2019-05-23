@@ -28,6 +28,10 @@ export class PatternsService {
       }
     };
   }
+
+  textDirection(text: string): 'rtl' | 'ltr' {
+    return /[א-ת]/.test(text) ? 'rtl' : 'ltr';
+  }
 }
 
 export type Language = keyof ReturnType<PatternsService['languages']>;

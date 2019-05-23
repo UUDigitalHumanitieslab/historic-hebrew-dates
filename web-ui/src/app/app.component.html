@@ -1,2 +1,9 @@
-<dh-select-language (select)="select($event)"></dh-select-language>
-<dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType"></dh-edit-patterns>
+<div class="columns">
+  <div class="column is-one-quarter">
+    <dh-select-language (select)="select($event)"></dh-select-language>
+  </div>
+  <div class="column">
+    <dh-parse [language]="language" [patternType]="patternType" [rows]="rows"></dh-parse>
+  </div>
+</div>
+<dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType" (rowsChange)="rows=$event"></dh-edit-patterns>

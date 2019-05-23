@@ -11,6 +11,7 @@ export class AppComponent {
   title = 'historic-hebrew-dates-ui';
   language: string;
   patternType: string;
+  rows: string[][] = undefined;
 
   select(selection: LanguageSelection<Language>) {
     this.language = selection.language;

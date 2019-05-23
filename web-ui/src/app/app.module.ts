@@ -8,12 +8,14 @@ import { TableModule } from 'primeng/table';
 import { AppComponent } from './app.component';
 import { EditPatternsComponent } from './edit-patterns/edit-patterns.component';
 import { SelectLanguageComponent } from './select-language/select-language.component';
+import { ParseComponent } from './parse/parse.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     EditPatternsComponent,
-    SelectLanguageComponent
+    SelectLanguageComponent,
+    ParseComponent
   ],
   imports: [
     BrowserModule,

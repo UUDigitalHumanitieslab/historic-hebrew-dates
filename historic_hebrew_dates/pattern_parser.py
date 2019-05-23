@@ -7,74 +7,79 @@ from collections import ChainMap
 from typing import Dict, Iterator, List, Tuple, Pattern, Optional
 
 class PatternParser:
-    def __init__(self, filename: str, type: str, child_patterns = []):
+    def __init__(self, filename: str, type: str, child_patterns = [], rows = None):
         self.type = type
         self.child_patterns: Dict[str, PatternParser] = {
             key:value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
         }
-        with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf8') as patterns:
-            reader = csv.reader(patterns, delimiter=',', quotechar='"')
-            next(reader)  # skip header
+        if rows:
+            self.parse_rows(rows)
+        else:
+            with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf8') as patterns:
+                rows = csv.reader(patterns, delimiter=',', quotechar='"')
+                next(rows)  # skip header
+                self.parse_rows(rows)
 
-            grouped_patterns_str: Dict[str, List[Tuple[str, str]]] = {}
-            # Start with terminal expression, make sure patterns only
-            # rely on preceding types: that way a pattern for the entire
-            # dependent type can be constructed first and used in the following
-            # types.
-            pattern_type_order: List[str] = []
-            for row in reader:
-                pattern_type: str = row[0]
-                pattern: str = row[1].replace(' ', ' *')
-                expression: str = row[2]
-                if not pattern_type in pattern_type_order:
-                    pattern_type_order.append(pattern_type)
-                if not pattern_type in grouped_patterns_str:
-                    grouped_patterns_str[pattern_type] = []
-                grouped_patterns_str[pattern_type].append((pattern, expression))
+    def parse_rows(self, rows):
+        grouped_patterns_str: Dict[str, List[Tuple[str, str]]] = {}
+        # Start with terminal expression, make sure patterns only
+        # rely on preceding types: that way a pattern for the entire
+        # dependent type can be constructed first and used in the following
+        # types.
+        pattern_type_order: List[str] = []
+        for row in rows:
+            pattern_type: str = row[0]
+            pattern: str = row[1].replace(' ', ' *')
+            expression: str = row[2]
+            if not pattern_type in pattern_type_order:
+                pattern_type_order.append(pattern_type)
+            if not pattern_type in grouped_patterns_str:
+                grouped_patterns_str[pattern_type] = []
+            grouped_patterns_str[pattern_type].append((pattern, expression))
 
-            all_patterns: List[str] = []
-            parse_patterns: List[Tuple[Pattern, str]] = []
+        all_patterns: List[str] = []
+        parse_patterns: List[Tuple[Pattern, str]] = []
 
-            # Expressions matching an entire pattern type
-            pattern_type_expressions: Dict[str, str] = {}
+        # Expressions matching an entire pattern type
+        pattern_type_expressions: Dict[str, str] = {}
 
-            grouped_patterns: Dict[str, List[Tuple[Pattern, str]]] = {}
+        grouped_patterns: Dict[str, List[Tuple[Pattern, str]]] = {}
 
-            for pattern_type in pattern_type_order:
-                type_patterns: List[str] = []
-                grouped_patterns[pattern_type] = []
-                for i, (pattern, expression) in enumerate(grouped_patterns_str[pattern_type]):
-                    named_pattern = r'^'
-                    matching_pattern = ''
-                    last_pos = 0
-                    for sub_pattern in re.finditer(r'\{(?P<name>[^\}]+)\}', pattern):
-                        (start, end) = sub_pattern.span()
-                        named_pattern += pattern[last_pos:start]
+        for pattern_type in pattern_type_order:
+            type_patterns: List[str] = []
+            grouped_patterns[pattern_type] = []
+            for i, (pattern, expression) in enumerate(grouped_patterns_str[pattern_type]):
+                named_pattern = r'^'
+                matching_pattern = ''
+                last_pos = 0
+                for sub_pattern in re.finditer(r'\{(?P<name>[^\}]+)\}', pattern):
+                    (start, end) = sub_pattern.span()
+                    named_pattern += pattern[last_pos:start]
 
-                        var_name, sub_type = self.get_group_name_parts(sub_pattern.groupdict()['name'])
+                    var_name, sub_type = self.get_group_name_parts(sub_pattern.groupdict()['name'])
 
-                        if re.match(r'\d+', sub_type):
-                            # a number means: include all preceding patterns
-                            sub_type_expression = f"({'|'.join(all_patterns)})"
-                        elif sub_type in self.child_patterns:
-                            sub_type_expression = self.child_patterns[sub_type].search_pattern
-                        else:
-                            sub_type_expression = pattern_type_expressions[sub_type]
-                        named_pattern += f'(?P<{self.get_group_name(var_name, sub_type)}>{sub_type_expression})'
+                    if re.match(r'\d+', sub_type):
+                        # a number means: include all preceding patterns
+                        sub_type_expression = f"({'|'.join(all_patterns)})"
+                    elif sub_type in self.child_patterns:
+                        sub_type_expression = self.child_patterns[sub_type].search_pattern
+                    else:
+                        sub_type_expression = pattern_type_expressions[sub_type]
+                    named_pattern += f'(?P<{self.get_group_name(var_name, sub_type)}>{sub_type_expression})'
 
-                        matching_pattern += pattern[last_pos:start]
-                        matching_pattern += sub_type_expression
-                        last_pos = end
-                    named_pattern += pattern[last_pos:] + r'$'
-                    matching_pattern += pattern[last_pos:]
+                    matching_pattern += pattern[last_pos:start]
+                    matching_pattern += sub_type_expression
+                    last_pos = end
+                named_pattern += pattern[last_pos:] + r'$'
+                matching_pattern += pattern[last_pos:]
 
-                    grouped_patterns[pattern_type].append((
-                        re.compile(named_pattern), expression))
-                    parse_patterns.append((re.compile(named_pattern), expression))
+                grouped_patterns[pattern_type].append((
+                    re.compile(named_pattern), expression))
+                parse_patterns.append((re.compile(named_pattern), expression))
 
-                    type_patterns.append(matching_pattern)
-                    all_patterns.append(matching_pattern)
-                pattern_type_expressions[pattern_type] = f"({'|'.join(type_patterns)})"
+                type_patterns.append(matching_pattern)
+                all_patterns.append(matching_pattern)
+            pattern_type_expressions[pattern_type] = f"({'|'.join(type_patterns)})"
 
         self.parse_patterns = parse_patterns
         self.grouped_patterns = grouped_patterns
@@ -108,7 +113,7 @@ class PatternParser:
                         sub_patterns = self.grouped_patterns[sub_type]
                     if sub_parse is None:
                         sub_parse = self.parse(
-                            sub_text, 
+                            sub_text,
                             sub_patterns)
                     if sub_parse is None:
                         return None
