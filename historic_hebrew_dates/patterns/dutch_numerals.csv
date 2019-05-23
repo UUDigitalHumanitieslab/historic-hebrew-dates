@@ -1,0 +1,45 @@
+﻿type,pattern,value
+getal,één,1
+getal,een,1
+getal,twee,2
+getal,drie,3
+getal,vier,4
+getal,vijf,5
+getal,zes,6
+getal,zeven,7
+getal,acht,8
+getal,negen,9
+tien,tien,10
+tien,elf,11
+tien,twaalf,12
+tien,dertien,13
+tien,veertien,14
+tien,{getal}tien,(10+{getal})
+tienvoud,twintig,20
+tienvoud,dertig,30
+tienvoud,veertig,40
+tienvoud,vijftig,50
+tienvoud,zestig,60
+tienvoud,zeventig,70
+tienvoud,tachtig,80
+tienvoud,negentig,90
+tienen,{getal} en {tienvoud},({getal}+{tienvoud})
+honderd,honderd,100
+honderd,{getal} honderd,{getal}*100
+honderden,{honderd} {getal},({honderd}+{getal})
+honderden,{honderd} en {getal},({honderd}+{getal})
+honderden,{honderd} {tien},({honderd}+{tien})
+honderden,{honderd} en {tien},({honderd}+{tien})
+honderden,{honderd} {tienvoud},({honderd}+{tienvoud})
+honderden,{honderd} en {tienvoud},({honderd}+{tienvoud})
+honderden,{honderd} {tienen},({honderd}+{tienen})
+honderden,{honderd} en {tienen},({honderd}+{tienen})
+duizend,duizend,1000
+duizend,{tien} honderd,{tien}*100
+duizend,{1}duizend,{1}*1000
+duizenden,{duizend} {1},({duizend}+{1})
+duizenden,{duizend} en {1},({duizend}+{1})
+duizenden,{tien} {getal},({tien}*100+{getal})
+duizenden,{groot:tien} {klein:tien},({groot}*100+{klein})
+duizenden,{tien} {tienvoud},({tien}*100+{tienvoud})
+duizenden,{tien} {tienen},({tien}*100+{tienen})

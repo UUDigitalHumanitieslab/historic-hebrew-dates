@@ -1,82 +1,124 @@
-#!/usr/bin/env python3
 import re
-import os
+from typing import Dict, List, Union
 
-import numpy as np
-import pandas as pd
-from bidi.algorithm import get_display
+tokens = (
+    'WORD',
+    'LBRACE',
+    'RBRACE',
+    'LPAREN',
+    'RPAREN'
+)
 
-pd.set_option('display.max_colwidth', -1)
+t_LBRACE = r'\{'
+t_RBRACE = r'\}'
+t_LPAREN  = r'\('
+t_RPAREN  = r'\)'
+t_WORD = r'[\w \t\n\.\*]+'
+
+t_ignore = "\r[]><,?/:'"
+
+def t_error(t):
+    raise Exception("Illegal character '%s'" % t.value[0])
+    t.lexer.skip(1)
+
+# Build the lexer
+import ply.lex as lex
+lexer = lex.lex(reflags=re.UNICODE)
+
+def p_expression(p):
+    '''expression : words
+                  | annotation
+                  | words annotation'''
+    p[0] = p[1:]
+
+def p_expression_multiple(p):
+    '''expression : words annotation expression
+                  | annotation expression'''
+    terms = len(p)
+    p[0] = p[1:terms-1] + p[terms-1]
+
+def p_annotation(p):
+    'annotation : LBRACE expression RBRACE LPAREN WORD RPAREN'
+    p[0] = {
+        'tag': p[5],
+        'expression': p[2]
+    }
+
+def p_words(p):
+    '''words : WORD
+             | WORD words'''
+    if len(p) == 2:
+        p[0] = { 'words': [p[1]] }
+    else:
+        p[0] = { 'words': [p[1]] + p[2]['words'] }
+
+def p_error(p):
+    raise Exception("Syntax error at '%s'" % p.value)
+
+import ply.yacc as yacc
+parser = yacc.yacc()
+
+def word_to_pattern(word: str):
+    word = re.sub(r'[ \t\n]+', ' ', word)
+    return re.sub(r'[\*\.]+', '\\\\w*', word)
+
+def expression_to_pattern(expression, tag_types: Dict[str, str]):
+    for part in expression:
+        if 'tag' in part:
+            tag = part['tag']
+            if tag in tag_types:
+                yield f'{{{tag}:{tag_types[tag]}}}'
+            else:
+                yield f'{{{tag}}}'
+        elif 'words' in part:
+            yield from map(word_to_pattern, part['words'])
+
+def get_patterns_from_parse(parse, tag_types: Dict[str, str]) -> List[Union[str, str, str, str]]:
+    patterns = []
+
+    for expression in parse:
+        if 'tag' in expression:
+            annotation_expression = expression['expression']
+            tag = expression['tag']
+            if tag in tag_types:
+                tag_type = tag_types[tag]
+            else:
+                tag_type = tag
+            patterns += [(
+                tag,
+                tag,
+                tag_type,
+                ''.join(expression_to_pattern(annotation_expression, tag_types)).strip())]
+
+            # store the context to disambiguate year of age, and of dates
+            context = tag
+            patterns += list(map(
+                lambda item: (context, item[1], item[2], item[3]), 
+                get_patterns_from_parse(annotation_expression, tag_types)))
+
+    return patterns
 
 
-class AnnotatedCorpus:
-    def __init__(self):
-        self.tags = pd.read_csv(os.path.join(
-            os.path.dirname(__file__), 'tags.csv'))
+def get_patterns(text: str, tag_types: Dict[str, str] = {}):
+    """
+    Gets all the pattern from annotated text.
 
-        self.raw_df = pd.read_excel(os.path.join(
-            os.getcwd(), 'data/Inscription DB for Time Project.xlsx'), header=0)
+    tag_types: Tag types which should be mapped to another type (e.g. year -> number)
+    """
 
-        self.cleaned = self.clean_transcriptions(self.raw_df)
-        self.infixed = self.infix_transcriptions(self.cleaned)
-        self.parsed = self.parse_transcriptions(self.infixed)
+    parse = parser.parse(text)
+    return get_patterns_from_parse(parse, tag_types)
 
-    def clean_transcriptions(self, dataframe):
-        cleaned_df = dataframe.copy(deep=True)
-        cleaned_df['Transcription'] = dataframe['Transcription'] \
-            .str.replace('\n', '') \
-            .str.replace('[', '') \
-            .str.replace(']', '')
-        return cleaned_df
-
-    def infix_transcriptions(self, dataframe):
-        """ Rewrite transcriptions of the form {text}(tag) to {text(tag)}"""
-        pattern = r'(})(\(.+?\))'
-        infixed_df = dataframe.copy(deep=True)
-        infixed_df['Transcription'].replace(
-            to_replace=pattern, value=r'\2\1', regex=True, inplace=True)
-        return infixed_df
-
-    def parse_transcriptions(self, dataframe):
-        dataframe = self.parse_column(dataframe, 'Transcription')
-        dataframe = self.parse_column(dataframe, 'T_date')
-        dataframe = self.parse_column(dataframe, 'T_age')
-        dataframe = self.parse_column(dataframe, 'T_date_type')
-        return dataframe
-
-    def parse_column(self, dataframe, column_name):
-        tag_pattern = r'(^.+)\((.+)\)$'
-        c_name = 'T' if column_name == 'Transcription' else column_name
-        for i, row in enumerate(dataframe[column_name]):
-            try:
-                parsed_level = parse_level_parentheses(row)
-                if parsed_level:
-                    for annotation in parsed_level:
-                        match = re.match(tag_pattern, annotation)
-                        if match:
-                            text, tag = match.groups()
-                            full_tag = '_'.join(
-                                [c_name, self.translate_tag(tag)])
-                            if full_tag not in dataframe.columns:
-                                dataframe[full_tag] = None
-                            dataframe.loc[i, full_tag] = text
-            except:
-                pass
-        return dataframe
-
-    def translate_tag(self, input_tag):
-        return self.tags[self.tags.tag == input_tag]['translation'].values[0]
-
-
-def parse_level_parentheses(string, open='{', close='}'):
-    """ Parse a single level of matching brackets """
-    stack = []
-    parsed = []
-    for i, c in enumerate(string):
-        if c == open:
-            stack.append(i)
-        elif c == '}' and stack:
-            start = stack.pop()
-            if len(stack) == 0:
-                parsed.append((string[start + 1: i]))
-    return parsed
+if __name__ == "__main__":
+    # interactive mode for testing from console
+    while True:
+        try:
+            s = input('input > ')
+            if not s:
+                quit()
+        except EOFError:
+            break
+        parse = parser.parse(s)
+        print(parse)
+        patterns = get_patterns(s)
+        print(patterns)
