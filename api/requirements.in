@@ -1,0 +1,8 @@
+django>=1.11,<2
+djangorestframework
+django-livereload-server
+django-revproxy
+psycopg2 --no-binary psycopg2
+pytest
+pytest-django
+pytest-xdist
