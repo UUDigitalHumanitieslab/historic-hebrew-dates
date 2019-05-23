@@ -108,6 +108,3 @@ venv.bak/
 
 # IDE
 .vscode/
-
-# other
-*.xlsx
