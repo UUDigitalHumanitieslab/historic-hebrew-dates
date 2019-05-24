@@ -28,6 +28,25 @@ export class ApiService {
     return { fields, patterns };
   }
 
+  async put<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
+    lang: Lang,
+    patternType: PatternType,
+    rows: string[][]) {
+    const result = await this.httpClient.put<{ success: boolean, message: string }>(
+      `/api/patterns/${lang}/${patternType}`, {
+        rows: [['type', 'pattern', 'value'], ...rows]
+      }).toPromise().catch((error) => ({
+        success: false,
+        message: error.message
+      }));
+
+    if (!result.success) {
+      return { success: false, error: result.message || 'Problem saving the results.' };
+    }
+
+    return { success: true };
+  }
+
   async parse<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
     lang: Lang,
     patternType: PatternType,

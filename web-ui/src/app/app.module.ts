@@ -13,6 +13,7 @@ import { EditPatternsComponent } from './edit-patterns/edit-patterns.component';
 import { SelectLanguageComponent } from './select-language/select-language.component';
 import { ParseComponent } from './parse/parse.component';
 import { AddPatternComponent } from './add-pattern/add-pattern.component';
+import { NotificationsComponent } from './notifications/notifications.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { AddPatternComponent } from './add-pattern/add-pattern.component';
     EditPatternsComponent,
     SelectLanguageComponent,
     ParseComponent,
-    AddPatternComponent
+    AddPatternComponent,
+    NotificationsComponent
   ],
   imports: [
     BrowserModule,

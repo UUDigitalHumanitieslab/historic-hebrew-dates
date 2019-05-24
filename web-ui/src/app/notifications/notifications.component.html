@@ -1,0 +1,7 @@
+<div *ngIf="message" class="notification"
+  [ngClass]="{'is-danger': type === 'error', 'is-success': type === 'success', 'is-info': type === 'info'}"
+  [dir]="dir">
+  <span [innerHtml]="message"></span>
+  <a class="delete" (click)="message = undefined"></a>
+</div>
+<br *ngIf="message" />

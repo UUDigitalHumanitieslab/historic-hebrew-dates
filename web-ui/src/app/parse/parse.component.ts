@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ApiService, Parse } from '../api.service';
 import { Language, LanguagePattern, PatternsService } from '../patterns.service';
+import { NotificationsService } from '../notifications.service';
 
 @Component({
   selector: 'dh-parse',
@@ -13,21 +14,28 @@ export class ParseComponent implements OnInit {
   @Input() rows: string[][];
 
   value: string;
-  parse: Parse & { dir: 'ltr' | 'rtl' };
   loading = false;
 
-  constructor(private apiService: ApiService, private patternService: PatternsService) { }
+  constructor(
+    private apiService: ApiService,
+    private patternService: PatternsService,
+    private notificationService: NotificationsService) { }
 
   ngOnInit() {
   }
 
   async tryParse() {
-    this.parse = undefined;
     this.loading = true;
     const parse = await this.apiService.parse(this.language, this.patternType, this.value, this.rows);
-    this.parse = Object.assign({
-      dir: parse.evaluated && this.patternService.textDirection(parse.evaluated) || undefined
-    }, parse);
+    let message: string;
+    const dir = parse.evaluated && this.patternService.textDirection(parse.evaluated) || undefined;
+    if (parse.expression) {
+      message = `<span title="expression value">${parse.expression}</span> ${dir === 'ltr' ? '→' : '←'} <span
+      title="evaluated">${parse.evaluated}</span>`;
+    } else {
+      message = 'No pattern matched!';
+    }
+    this.notificationService.show(message, parse.expression ? 'success' : 'error', dir);
     this.loading = false;
   }
 }

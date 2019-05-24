@@ -10,10 +10,4 @@
     </div>
   </div>
 </form>
-<div class="notification" *ngIf="parse" [ngClass]="{'is-danger': parse.error}" [dir]="parse.dir">
-  <span *ngIf="parse.expression; else emptyParse">
-    <span title="expression value">{{parse.expression}}</span> {{parse.dir == 'ltr' ? '→' : '←' }} <span
-      title="evaluated">{{parse.evaluated}}</span>
-  </span>
-  <ng-template #emptyParse>No pattern matched!</ng-template>
-</div>
+

@@ -28,6 +28,19 @@ def get(lang, type):
         return jsonify(list(reader))
 
 
+@app.route("/api/patterns/<lang>/<type>", methods=['PUT'])
+def put(lang, type):
+    data = request.get_json()
+    rows = data['rows']
+
+    with open(pattern_path(lang, type), mode='w', encoding='utf-8-sig') as patterns:
+        for row in rows:
+            patterns.write(
+                ','.join(map(lambda cell: f'"{cell}"' if ',' in cell else cell, row)) + '\n')
+
+    return jsonify({'success': True})
+
+
 @app.route("/api/parse/<lang>/<type>", methods=['POST'])
 def parse(lang, type):
     data = request.get_json()

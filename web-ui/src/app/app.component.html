@@ -8,7 +8,18 @@
       <div class="column">
         <dh-parse [language]="language" [patternType]="patternType" [rows]="rows"></dh-parse>
       </div>
+      <div class="column is-one-quarter">
+        <a class="button" (click)="save()" [ngClass]="{'is-loading': saving}">
+          <span class="icon">
+            <fa-icon [icon]="saveIcon"></fa-icon>
+          </span>
+          <span>
+            Save
+          </span>
+        </a>
+      </div>
     </div>
+    <dh-notifications></dh-notifications>
     <dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType" (rowsChange)="rows=$event">
     </dh-edit-patterns>
   </div>
