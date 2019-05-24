@@ -14,11 +14,11 @@ $ python -m historic_hebrew_dates שבע מאות וחמישים וארבע
 
 # Getting it to Work
 
-* Install [Python 3.6](https://www.python.org/downloads/) or newer.
-* Install [node](https://nodejs.org/en/).
-* Install [yarn](https://yarnpkg.com/).
+* Install [Python 3.6](https://www.python.org) or newer.
+* Install [node](https://nodejs.org).
+* Install [yarn](https://yarnpkg.com).
 
-(If you want you could setup a virtual environment now).
+(If you want you could setup a [virtual environment](https://virtualenv.pypa.io) first).
 
 ```
 yarn

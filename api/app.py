@@ -23,7 +23,7 @@ def pattern_path(lang, type):
 
 @app.route("/api/patterns/<lang>/<type>", methods=['GET'])
 def get(lang, type):
-    with open(pattern_path(lang, type), encoding='utf8') as patterns:
+    with open(pattern_path(lang, type), encoding='utf-8-sig') as patterns:
         reader = csv.reader(patterns)
         return jsonify(list(reader))
 

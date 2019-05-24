@@ -1,0 +1,23 @@
+<form (ngSubmit)="addNext()" class="box">
+  <div class="field">
+    <label class="label">Type</label>
+    <div class="control" [ngClass]="{'is-rtl': dir == 'rtl'}">
+      <p-autoComplete name="type" [(ngModel)]="type" [suggestions]="suggestedTypes" (completeMethod)="suggestTypes($event)" [dropdown]="true"></p-autoComplete>
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">Pattern</label>
+    <div class="control">
+      <input class="input" type="text" name="pattern" [(ngModel)]="pattern" [dir]="dir">
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">Value</label>
+    <div class="control">
+      <input class="input" type="text" name="value" [(ngModel)]="value" [dir]="dir">
+    </div>
+  </div>
+  <p class="buttons">
+    <button class="button is-primary" type="submit">Add pattern</button>
+  </p>
+</form>

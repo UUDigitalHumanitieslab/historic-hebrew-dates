@@ -15,7 +15,7 @@ class PatternParser:
         if rows:
             self.parse_rows(rows)
         else:
-            with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf8') as patterns:
+            with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf-8-sig') as patterns:
                 rows = csv.reader(patterns, delimiter=',', quotechar='"')
                 next(rows)  # skip header
                 self.parse_rows(rows)

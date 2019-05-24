@@ -1,9 +1,15 @@
-<div class="columns">
-  <div class="column is-one-quarter">
-    <dh-select-language (select)="select($event)"></dh-select-language>
+<section class="section">
+  <div class="container">
+    <h1 class="title">Pattern Editor</h1>
+    <div class="columns">
+      <div class="column is-one-quarter">
+        <dh-select-language (select)="select($event)"></dh-select-language>
+      </div>
+      <div class="column">
+        <dh-parse [language]="language" [patternType]="patternType" [rows]="rows"></dh-parse>
+      </div>
+    </div>
+    <dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType" (rowsChange)="rows=$event">
+    </dh-edit-patterns>
   </div>
-  <div class="column">
-    <dh-parse [language]="language" [patternType]="patternType" [rows]="rows"></dh-parse>
-  </div>
-</div>
-<dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType" (rowsChange)="rows=$event"></dh-edit-patterns>
+</section>
