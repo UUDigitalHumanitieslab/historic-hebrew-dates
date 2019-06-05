@@ -14,7 +14,7 @@ $ python -m historic_hebrew_dates שבע מאות וחמישים וארבע
 
 # Getting it to Work
 
-* Install [Python 3.6](https://www.python.org) or newer.
+* Install [Python 3.6](https://www.python.org) or newer and make sure to include pip.
 * Install [node](https://nodejs.org).
 * Install [yarn](https://yarnpkg.com).
 
