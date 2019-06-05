@@ -1,0 +1,35 @@
+<p-table [value]="patterns" *ngIf="patterns">
+  <ng-template pTemplate="header">
+    <tr>
+      <th *ngFor="let col of cols">
+        {{col.header}}
+      </th>
+      <th style="width: 5em">&nbsp;</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-pattern>
+    <tr [ngClass]="{'is-deleted': pattern.deleted }">
+      <td *ngFor="let col of cols" [dir]="pattern.fields[col.field].dir" pEditableColumn
+        [ngClass]="{'is-modified': pattern.fields[col.field].modified}">
+        <p-cellEditor>
+          <ng-template pTemplate="input">
+            <input type="text" [(ngModel)]="pattern.fields[col.field].value" required
+              (change)="onCellChange(pattern, col.field)">
+          </ng-template>
+          <ng-template pTemplate="output">
+            {{pattern.fields[col.field].value}}
+          </ng-template>
+        </p-cellEditor>
+      </td>
+      <td>
+        <a class="button" (click)="toggleDelete(pattern)">
+          <span class="icon">
+            <fa-icon [icon]="pattern.deleted ? restoreIcon : deleteIcon"></fa-icon>
+          </span>
+        </a>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<br />
+<dh-add-pattern [types]="types" (add)="add($event)"></dh-add-pattern>

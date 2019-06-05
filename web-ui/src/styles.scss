@@ -1,0 +1,18 @@
+@import '~bulma/bulma';
+
+body .ui-table .ui-table-tbody>tr {
+    &.is-deleted {
+        color: lightgray;
+        text-decoration: line-through;
+    }
+
+    >td {
+        &[dir="rtl"] {
+            text-align: right;
+        }
+
+        &.is-modified {
+            background: lighten($info, 20%);
+        }
+    }
+}

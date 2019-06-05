@@ -1,11 +1,25 @@
 language: python
-
 python:
     - 3.6
     - 3.7
-
-before_script:
-    pip install -r requirements.txt
-
+env:
+  - MOZ_HEADLESS=1
+addons:
+  chrome: stable
+  firefox: latest
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.yarn-cache
+    - frontend/node_modules
+before_install:
+  - nvm install 10
+  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
+install:
+  - yarn global add chromedriver geckodriver webdriver
+  - pip install virtualenv
 script:
-    - python -m unittest discover tests/
+  - source .env/bin/activate
+  - yarn
+  - yarn start &
+  - yarn test

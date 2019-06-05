@@ -1,0 +1,13 @@
+﻿<form (ngSubmit)="tryParse()">
+  <div class="field has-addons">
+    <div class="control is-expanded">
+      <input class="input" type="text" name="value" [(ngModel)]="value"
+        [dir]="language == 'hebrew' ? 'rtl' : 'ltr'" />
+    </div>
+    <div class="control">
+      <button class="button is-primary" type="submit" [ngClass]="{'is-loading': loading}"
+        title="It will parse using any of the modifications made on this table.">Parse</button>
+    </div>
+  </div>
+</form>
+

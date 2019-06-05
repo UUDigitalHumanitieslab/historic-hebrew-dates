@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Temporary files
+/static/
+
 # C extensions
 *.so
 
@@ -89,6 +92,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Node
+node_modules/
 
 # Spyder project settings
 .spyderproject

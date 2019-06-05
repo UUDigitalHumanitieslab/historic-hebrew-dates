@@ -1,0 +1,25 @@
+{
+    "name": "historic-hebrew-dates",
+    "description": "Editing and parsing interface for historical Hebrew dates.",
+    "author": "UU Digital Humanities Lab",
+    "repository": "github:UUDigitalHumanitieslab/historic-hebrew-dates",
+    "private": true,
+    "scripts": {
+        "front": "cd web-ui && ",
+        "preinstall": "pip install pip-tools && pip install -r requirements.txt",
+        "postinstall": "yarn front yarn",
+        "test-front": "yarn front yarn test-once",
+        "test-parse": "python -m unittest discover tests/",
+        "test": "yarn test-front && yarn test-parse",
+        "start": "yarn start-front & yarn start-back",
+        "start-front": "yarn front yarn serve",
+        "start-back": "cross-env FLASK_APP=api/app.py flask run",
+        "watch-test-front": "yarn front yarn test",
+        "build": "yarn front yarn build",
+        "build-p": "yarn front yarn build --prod",
+        "watch-front-p": "yarn front yarn watch"
+    },
+    "dependencies": {
+        "cross-env": "^5.2.0"
+    }
+}

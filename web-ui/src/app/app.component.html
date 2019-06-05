@@ -1,0 +1,26 @@
+<section class="section">
+  <div class="container">
+    <h1 class="title">Pattern Editor</h1>
+    <div class="columns">
+      <div class="column is-one-quarter">
+        <dh-select-language (select)="select($event)"></dh-select-language>
+      </div>
+      <div class="column">
+        <dh-parse [language]="language" [patternType]="patternType" [rows]="rows"></dh-parse>
+      </div>
+      <div class="column is-one-quarter">
+        <a class="button" (click)="save()" [ngClass]="{'is-loading': saving}">
+          <span class="icon">
+            <fa-icon [icon]="saveIcon"></fa-icon>
+          </span>
+          <span>
+            Save
+          </span>
+        </a>
+      </div>
+    </div>
+    <dh-notifications></dh-notifications>
+    <dh-edit-patterns *ngIf="language" [language]="language" [patternType]="patternType" (rowsChange)="rows=$event">
+    </dh-edit-patterns>
+  </div>
+</section>

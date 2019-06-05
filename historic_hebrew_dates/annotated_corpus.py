@@ -123,6 +123,7 @@ class AnnotatedCorpus:
                     subtags = list(map(lambda match: match.groups()[0], re.finditer(r'\{(\w+)(:\w+|)\}', pattern)))
                     if len(subtags) != len(set(subtags)):
                         print(f"Duplicate tags in {pattern}")
+                        print(row)
                     else:
                         value ='[' + ', '.join(map(lambda tag: f'{tag}: \'{tag}\'', subtags)) + ']'
                         aggr_patterns[translated_tag][pattern] = value
