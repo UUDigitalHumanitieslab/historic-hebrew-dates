@@ -114,3 +114,6 @@ node_modules/
 
 # IDE
 .vscode/
+
+# epidat data
+data/epidat/
