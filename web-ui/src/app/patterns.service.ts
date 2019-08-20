@@ -23,6 +23,7 @@ export class PatternsService {
         display: 'Dutch',
         patterns: {
           dates: 'Dates',
+          months: 'Months',
           numerals: 'Numerals'
         }
       }

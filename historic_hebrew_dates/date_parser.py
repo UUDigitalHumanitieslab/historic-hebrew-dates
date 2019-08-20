@@ -18,7 +18,7 @@ class DateParser(PatternParser):
             self.number_keys = ['שנה']
         elif lang == 'dutch':
             super().__init__('dutch_dates.csv',
-                             'datum', [self.numeral_parser], rows)
+                             'datum', [MonthParser(lang), self.numeral_parser], rows)
             self.number_keys = ['dag', 'jaar']
         else:
             raise f'Unknown language {lang}'

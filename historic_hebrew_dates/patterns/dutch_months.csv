@@ -1,0 +1,14 @@
+type,pattern,value
+naam,januari,1
+naam,februari,2
+naam,maart,3
+naam,april,4
+naam,mei,5
+naam,juni,6
+naam,juli,7
+naam,augustus,8
+naam,september,9
+naam,oktober,10
+naam,november,11
+naam,december,12
+getal,{nummer},{nummer}
