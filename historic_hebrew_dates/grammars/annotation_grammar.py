@@ -56,7 +56,7 @@ def p_error(p):
     raise Exception("Syntax error at '%s'" % p.value)
 
 import ply.yacc as yacc
-parser = yacc.yacc()
+parser = yacc.yacc(tabmodule='annotation_parsetab', debugfile='annotation.out')
 
 def word_to_pattern(word: str):
     word = re.sub(r'[ \t\n]+', ' ', word)
@@ -93,7 +93,7 @@ def get_patterns_from_parse(parse, tag_types: Dict[str, str]) -> List[Union[str,
             # store the context to disambiguate year of age, and of dates
             context = tag
             patterns += list(map(
-                lambda item: (context, item[1], item[2], item[3]), 
+                lambda item: (context, item[1], item[2], item[3]),
                 get_patterns_from_parse(annotation_expression, tag_types)))
 
     return patterns

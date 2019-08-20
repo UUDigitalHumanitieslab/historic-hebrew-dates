@@ -6,7 +6,7 @@ import csv
 import pandas as pd
 from bidi.algorithm import get_display
 
-from .annotation_parser import get_patterns
+from .grammars.annotation_grammar import get_patterns
 from .date_type_parser import DateTypeParser
 from .numeral_parser import NumeralParser
 
