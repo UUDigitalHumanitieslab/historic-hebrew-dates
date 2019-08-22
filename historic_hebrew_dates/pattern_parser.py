@@ -168,8 +168,8 @@ class PatternParser:
                     sub_type_expression = self.__merge_patterns(
                         preceding_patterns)
                 elif part['type'] in self.child_patterns:
-                    sub_type_expression = self.child_patterns[part['type']
-                                                              ].search_pattern
+                    sub_type_expression = self.child_patterns[
+                        part['type']].search_pattern
                 else:
                     sub_type_expression = self.__merge_patterns(
                         list(map(lambda row: row[1], type_patterns[part['type']])))
@@ -179,3 +179,24 @@ class PatternParser:
                 else:
                     pattern += sub_type_expression
         return re.compile(pattern)
+
+    def search(self, text):
+        pos = 0
+        for match in re.finditer(self.search_pattern, text):
+            (start, end) = match.span()
+            if start > pos:
+                yield {
+                    'text': text[pos:start]
+                }
+            pos = end
+            match_text = match.group(0)
+            parsed_text = self.parse(match_text)
+            yield {
+                'text': match_text,
+                'parsed': parsed_text,
+                'eval': self.eval(parsed_text)
+            }
+        if pos < len(text):
+            yield {
+                'text': text[pos:]
+            }

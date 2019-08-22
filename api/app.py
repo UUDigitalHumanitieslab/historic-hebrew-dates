@@ -65,3 +65,19 @@ def parse(lang, type):
                 failure = True
 
     return jsonify({'expression': expression, 'evaluated': evaluated, 'error': failure})
+
+
+@app.route("/api/search/<lang>/<type>", methods=['POST'])
+def search(lang, type):
+    data = request.get_json()
+    input = data['input']
+    rows = data['rows']
+    parser = type_parsers[type](lang=lang, rows=rows)
+    failure = False
+    try:
+        result = list(parser.search(input))
+    except Exception as error:
+        result = str(error)
+        failure = True
+
+    return jsonify({'result': result, 'error': failure})
