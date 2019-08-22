@@ -1,4 +1,5 @@
 ﻿type,pattern,value
+cijfers,\d+,{}
 getal,één,1
 getal,een,1
 getal,twee,2
@@ -26,6 +27,7 @@ tienvoud,negentig,90
 tienen,{getal} en {tienvoud},({getal}+{tienvoud})
 honderd,honderd,100
 honderd,{getal} honderd,{getal}*100
+honderd,{cijfers} honderd,{cijfers}*100
 honderden,{honderd} {getal},({honderd}+{getal})
 honderden,{honderd} en {getal},({honderd}+{getal})
 honderden,{honderd} {tien},({honderd}+{tien})
@@ -36,7 +38,7 @@ honderden,{honderd} {tienen},({honderd}+{tienen})
 honderden,{honderd} en {tienen},({honderd}+{tienen})
 duizend,duizend,1000
 duizend,{tien} honderd,{tien}*100
-duizend,{1}duizend,{1}*1000
+duizend,{1} duizend,{1}*1000
 duizenden,{duizend} {1},({duizend}+{1})
 duizenden,{duizend} en {1},({duizend}+{1})
 duizenden,{tien} {getal},({tien}*100+{getal})

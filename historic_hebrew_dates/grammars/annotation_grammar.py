@@ -19,7 +19,6 @@ t_ignore = "\r[]><,?/:'"
 
 def t_error(t):
     raise Exception("Illegal character '%s'" % t.value[0])
-    t.lexer.skip(1)
 
 # Build the lexer
 import ply.lex as lex
@@ -106,7 +105,7 @@ def get_patterns(text: str, tag_types: Dict[str, str] = {}):
     tag_types: Tag types which should be mapped to another type (e.g. year -> number)
     """
 
-    parse = parser.parse(text)
+    parse = parser.parse(text, lexer=lexer)
     return get_patterns_from_parse(parse, tag_types)
 
 if __name__ == "__main__":

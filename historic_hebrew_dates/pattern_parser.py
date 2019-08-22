@@ -4,23 +4,27 @@ import os
 import re
 
 from collections import ChainMap
-from typing import Dict, Iterator, List, Tuple, Pattern, Optional
+from typing import cast, Dict, Iterator, List, Tuple, Pattern, Optional
+from functools import reduce
+
+from .grammars.pattern_grammar import get_parts
+
 
 class PatternParser:
-    def __init__(self, filename: str, type: str, child_patterns = [], rows = None):
+    def __init__(self, filename: str, type: str, child_patterns=[], rows=None):
         self.type = type
         self.child_patterns: Dict[str, PatternParser] = {
-            key:value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
+            key: value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
         }
         if rows:
-            self.parse_rows(rows)
+            self.__parse_rows(rows)
         else:
             with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), encoding='utf-8-sig') as patterns:
                 rows = csv.reader(patterns, delimiter=',', quotechar='"')
                 next(rows)  # skip header
-                self.parse_rows(rows)
+                self.__parse_rows(rows)
 
-    def parse_rows(self, rows):
+    def __parse_rows(self, rows):
         grouped_patterns_str: Dict[str, List[Tuple[str, str]]] = {}
         # Start with terminal expression, make sure patterns only
         # rely on preceding types: that way a pattern for the entire
@@ -29,7 +33,7 @@ class PatternParser:
         pattern_type_order: List[str] = []
         for row in rows:
             pattern_type: str = row[0]
-            pattern: str = row[1].replace(' ', ' *')
+            pattern: str = row[1]
             expression: str = row[2]
             if not pattern_type in pattern_type_order:
                 pattern_type_order.append(pattern_type)
@@ -37,124 +41,141 @@ class PatternParser:
                 grouped_patterns_str[pattern_type] = []
             grouped_patterns_str[pattern_type].append((pattern, expression))
 
-        all_patterns: List[str] = []
-        parse_patterns: List[Tuple[Pattern, str]] = []
+        search_patterns: List[Pattern] = []
 
-        # Expressions matching an entire pattern type
-        pattern_type_expressions: Dict[str, str] = {}
-
-        grouped_patterns: Dict[str, List[Tuple[Pattern, str]]] = {}
+        # Patterns by type. For each item in the tuple:
+        # 0: the extraction pattern
+        # 1: the search pattern
+        # 2: the expression to evaluate
+        grouped_patterns: Dict[str, List[Tuple[Pattern, Pattern, str]]] = {}
 
         for pattern_type in pattern_type_order:
-            type_patterns: List[str] = []
             grouped_patterns[pattern_type] = []
             for i, (pattern, expression) in enumerate(grouped_patterns_str[pattern_type]):
-                named_pattern = r'^'
-                matching_pattern = ''
-                last_pos = 0
-                for sub_pattern in re.finditer(r'\{(?P<name>[^\}]+)\}', pattern):
-                    (start, end) = sub_pattern.span()
-                    named_pattern += pattern[last_pos:start]
+                parts = get_parts(pattern)
+                extraction_pattern = self.__compile_pattern(
+                    parts,
+                    grouped_patterns,
+                    search_patterns,
+                    True)
+                search_pattern = self.__compile_pattern(
+                    parts,
+                    grouped_patterns,
+                    search_patterns,
+                    False)
 
-                    var_name, sub_type = self.get_group_name_parts(sub_pattern.groupdict()['name'])
+                grouped_patterns[pattern_type].append(
+                    (extraction_pattern, search_pattern, expression))
+                search_patterns.append(search_pattern)
 
-                    if re.match(r'\d+', sub_type):
-                        # a number means: include all preceding patterns
-                        sub_type_expression = f"({'|'.join(all_patterns)})"
-                    elif sub_type in self.child_patterns:
-                        sub_type_expression = self.child_patterns[sub_type].search_pattern
-                    else:
-                        sub_type_expression = pattern_type_expressions[sub_type]
-                    named_pattern += f'(?P<{self.get_group_name(var_name, sub_type)}>{sub_type_expression})'
-
-                    matching_pattern += pattern[last_pos:start]
-                    matching_pattern += sub_type_expression
-                    last_pos = end
-                named_pattern += pattern[last_pos:] + r'$'
-                matching_pattern += pattern[last_pos:]
-
-                grouped_patterns[pattern_type].append((
-                    re.compile(named_pattern), expression))
-                parse_patterns.append((re.compile(named_pattern), expression))
-
-                type_patterns.append(matching_pattern)
-                all_patterns.append(matching_pattern)
-            pattern_type_expressions[pattern_type] = f"({'|'.join(type_patterns)})"
-
-        self.parse_patterns = parse_patterns
         self.grouped_patterns = grouped_patterns
-        self.search_pattern = f"({'|'.join(all_patterns)})"
+        self.search_pattern = self.__merge_patterns(search_patterns)
 
-    def parse(self, text: str, patterns: Optional[List[Tuple[Pattern, str]]]=None) -> Optional[str]:
+    def parse(self, text: str, patterns: List[Tuple[Pattern, Pattern, str]]=None) -> Optional[str]:
         if patterns is None:
-            patterns = self.parse_patterns
-        for (pattern, expression) in patterns:
-            match = pattern.match(text)
+            patterns = cast(
+                List[Tuple[Pattern, Pattern, str]],
+                reduce((lambda x, y: x + list(y)),
+                       self.grouped_patterns.values(), []))
+        for (extraction_pattern, search_pattern, expression) in patterns:
+            match = extraction_pattern.fullmatch(text)
             if match:
-                var_parts = ((self.get_var_name(group_name), value) for group_name, value in match.groupdict().items())
+                var_parts = ((self.__var_name(group_name), value)
+                             for group_name, value in match.groupdict().items())
+                # dictionary with the variable names, the values and the types
                 var_values = {
                     parts[0]: (value, parts[1])
                     for parts, value in var_parts
                 }
-                for group in re.finditer('\{(?P<var>[^\}]+)\}', expression):
+                for group in re.finditer('\{(?P<var>[^\}]*)\}', expression):
                     var_name = group['var']
-                    backref = re.match(r'^\d+$', var_name)
-                    try:
-                        sub_text, sub_type = var_values[f'g{var_name}' if backref else var_name]
-                    except:
-                        print(var_values)
-                        raise IndexError(f"{expression} {var_name}")
-                    sub_parse = None
-                    if backref:
-                        sub_patterns = None
-                    elif sub_type in self.child_patterns:
-                        sub_parse = self.child_patterns[sub_type].parse(sub_text)
+                    if not var_name:
+                        # refers to the entire text
+                        var_name = ''
+                        sub_parse = match.group(0)
                     else:
-                        sub_patterns = self.grouped_patterns[sub_type]
-                    if sub_parse is None:
-                        sub_parse = self.parse(
-                            sub_text,
-                            sub_patterns)
-                    if sub_parse is None:
-                        return None
+                        try:
+                            (sub_text, sub_type) = var_values[var_name]
+                        except:
+                            print(var_values)
+                            raise IndexError(f"{expression} {var_name}")
+                        backref = sub_type == 'backref'
+                        sub_parse = None
+                        sub_patterns = None
+
+                        if backref:
+                            # use the other (preceding patterns) to
+                            # evaluate this part of the match
+                            pass
+                        elif sub_type in self.child_patterns:
+                            sub_parse = self.child_patterns[sub_type].parse(
+                                sub_text)
+                        else:
+                            sub_patterns = self.grouped_patterns[sub_type]
+                        if sub_parse is None:
+                            sub_parse = self.parse(
+                                sub_text,
+                                sub_patterns)
+                        if sub_parse is None:
+                            return None
                     expression = re.sub(
-                        '\{' + group['var'] + '\}',
+                        '\{' + var_name + '\}',
                         sub_parse,
                         expression)
                 return expression
         return None
 
-    def get_group_name_parts(self, group_name: str):
-        """
-        Get the variable name and sub_type of a named group expression.
-        """
-        name_parts: List[str] = group_name.split(':')
-        if len(name_parts) == 2:
-            var_name = name_parts[0]
-            sub_type = name_parts[1]
-        else:
-            var_name = sub_type = name_parts[0]
-
-        if ('_' in var_name) or ('_' in sub_type):
-            raise Exception("Underscores aren't allowed in sub-pattern identifiers.")
-
-        return var_name, sub_type
-
-    def get_group_name(self, var_name: str, sub_type: str):
+    def __group_name(self, var_name: str, sub_type: str):
         """
         Gets the group name to use for a named group expression.
         """
-        if re.match(r'\d+', sub_type):
-            # a number means: include all preceding patterns
-            # prefix with g because named groups in regex aren't allowed
-            # to start with a digit
-            return f'g{var_name}__{sub_type}'
-        else:
-            return f'{var_name}__{sub_type}'
 
-    def get_var_name(self, group_name: str):
+        return f'{self.type}__{var_name}__{sub_type}'
+
+    def __var_name(self, group_name: str) -> Tuple[str, str]:
         """
         Gets the variable names from the named groups.
         """
-        skip_first = 1 if re.match(r'\d+', group_name) else 0
-        return group_name[skip_first:].split('__')
+        type, var_name, sub_type = group_name.split('__')
+        return (var_name, sub_type)
+
+    def __merge_patterns(self, patterns: List[Pattern]) -> str:
+        return f"({'|'.join(map(lambda p: cast(str, p.pattern), patterns))})"
+
+    def __compile_pattern(self,
+                          parts: List[Dict[str, str]],
+                          type_patterns: Dict[str, List[Tuple[Pattern, Pattern, str]]],
+                          preceding_patterns: List[Pattern],
+                          extraction: bool) -> Pattern:
+        """Compile the pattern from csv-file to an executable regular expression.
+
+        Arguments:
+            parts {List[Dict[str, str]]} -- The evaluation result from the pattern grammar.
+            type_patterns {Dict[str, List[Tuple[Pattern, Pattern, str]]]} -- The dictionary of all the compiled patterns by type.
+            preceding_patterns {List[Pattern]} -- The patterns which have already been compiled.
+            extraction {bool} -- Whether the compilation should generate a named regular expression to allow for evaluation the associated expression.
+
+        Returns:
+            Pattern -- The compiled regular expression
+        """
+        pattern = ''
+        for part in parts:
+            if 'words' in part:
+                pattern += re.sub(r'[ \t\n]+', r'\\s*',
+                                  ' '.join(part['words']))
+            else:
+                if part['type'] == 'backref':
+                    sub_type_expression = self.__merge_patterns(
+                        preceding_patterns)
+                elif part['type'] in self.child_patterns:
+                    sub_type_expression = self.child_patterns[part['type']
+                                                              ].search_pattern
+                else:
+                    sub_type_expression = self.__merge_patterns(
+                        list(map(lambda row: row[1], type_patterns[part['type']])))
+
+                if extraction:
+                    pattern += f'(?P<{self.__group_name(part["name"], part["type"])}>{sub_type_expression})'
+                else:
+                    pattern += sub_type_expression
+        return re.compile(pattern)
