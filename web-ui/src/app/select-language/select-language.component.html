@@ -1,14 +1,20 @@
-<div class="select" *ngIf="languageList">
-  <select [(ngModel)]="selectedLanguage" (ngModelChange)="emit()">
-    <option *ngFor="let language of languageList" [ngValue]="language.name">
-      {{language.display}}
-    </option>
-  </select>
-</div>
-<div class="select" *ngIf="patterns">
-  <select [(ngModel)]="selectedPattern" (ngModelChange)="emit()">
-    <option *ngFor="let pattern of patterns" [ngValue]="pattern.name">
-      {{pattern.display}}
-    </option>
-  </select>
+<div class="field has-addons">
+  <div class="control">
+    <div class="select" *ngIf="languageList">
+      <select [(ngModel)]="selectedLanguage" (ngModelChange)="emit()">
+        <option *ngFor="let language of languageList" [ngValue]="language.name">
+          {{language.display}}
+        </option>
+      </select>
+    </div>
+  </div>
+  <div class="control">
+    <div class="select" *ngIf="patterns">
+      <select [(ngModel)]="selectedPattern" (ngModelChange)="emit()">
+        <option *ngFor="let pattern of patterns" [ngValue]="pattern.name">
+          {{pattern.display}}
+        </option>
+      </select>
+    </div>
+  </div>
 </div>

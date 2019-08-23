@@ -1,6 +1,8 @@
 import os
 import sys
 import csv
+import traceback
+
 from flask import Flask, jsonify, request
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -75,9 +77,15 @@ def search(lang, type):
     parser = type_parsers[type](lang=lang, rows=rows)
     failure = False
     try:
-        result = list(parser.search(input))
+        result = [escape_search(item) for item in list(parser.search(input))]
     except Exception as error:
         result = str(error)
+        print(traceback.format_exc())
         failure = True
 
     return jsonify({'result': result, 'error': failure})
+
+def escape_search(item):
+    if 'eval' in item:
+        item['eval'] = str(item['eval'])
+    return item

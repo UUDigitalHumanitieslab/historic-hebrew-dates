@@ -13,8 +13,8 @@
         [ngClass]="{'is-modified': pattern.fields[col.field].modified}">
         <p-cellEditor>
           <ng-template pTemplate="input">
-            <input type="text" [(ngModel)]="pattern.fields[col.field].value" required
-              (change)="onCellChange(pattern, col.field)">
+            <input type="text" class="cell-input" [(ngModel)]="pattern.fields[col.field].value" required
+              (keyup)="onCellChange(pattern, col.field)">
           </ng-template>
           <ng-template pTemplate="output">
             {{pattern.fields[col.field].value}}
@@ -32,4 +32,5 @@
   </ng-template>
 </p-table>
 <br />
-<dh-add-pattern [types]="types" (add)="add($event)"></dh-add-pattern>
+<h2 class="subtitle">Add Pattern</h2>
+<dh-add-pattern [types]="types" [dir]="dir" (add)="add($event)"></dh-add-pattern>

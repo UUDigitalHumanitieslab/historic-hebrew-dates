@@ -2,7 +2,7 @@
   <div class="field">
     <label class="label">Type</label>
     <div class="control" [ngClass]="{'is-rtl': dir == 'rtl'}">
-      <p-autoComplete name="type" [(ngModel)]="type" [suggestions]="suggestedTypes" (completeMethod)="suggestTypes($event)" [dropdown]="true"></p-autoComplete>
+      <p-autoComplete name="type" [(ngModel)]="type" [suggestions]="suggestedTypes" [dir]="dir" (completeMethod)="suggestTypes($event)" [dropdown]="true"></p-autoComplete>
     </div>
   </div>
   <div class="field">

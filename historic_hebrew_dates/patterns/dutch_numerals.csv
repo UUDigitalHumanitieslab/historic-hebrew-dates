@@ -24,24 +24,25 @@ tienvoud,zestig,60
 tienvoud,zeventig,70
 tienvoud,tachtig,80
 tienvoud,negentig,90
-tienen,{getal} en {tienvoud},({getal}+{tienvoud})
+tienen,{getal} ?en ?{tienvoud},({getal}+{tienvoud})
 honderd,honderd,100
-honderd,{getal} honderd,{getal}*100
-honderd,{cijfers} honderd,{cijfers}*100
-honderden,{honderd} {getal},({honderd}+{getal})
-honderden,{honderd} en {getal},({honderd}+{getal})
-honderden,{honderd} {tien},({honderd}+{tien})
-honderden,{honderd} en {tien},({honderd}+{tien})
-honderden,{honderd} {tienvoud},({honderd}+{tienvoud})
-honderden,{honderd} en {tienvoud},({honderd}+{tienvoud})
-honderden,{honderd} {tienen},({honderd}+{tienen})
-honderden,{honderd} en {tienen},({honderd}+{tienen})
+honderd,{getal}[ -]?honderd,{getal}*100
+honderd,{cijfers}[ -]?honderd,{cijfers}*100
+honderd,{tienen}[ -]?honderd,({tienen}*100)
+honderden,{honderd}[ -]?{getal},({honderd}+{getal})
+honderden,{honderd} ?en ?{getal},({honderd}+{getal})
+honderden,{honderd}[ -]?{tien},({honderd}+{tien})
+honderden,{honderd} ?en ?{tien},({honderd}+{tien})
+honderden,{honderd}[ -]?{tienvoud},({honderd}+{tienvoud})
+honderden,{honderd} ?en ?{tienvoud},({honderd}+{tienvoud})
+honderden,{honderd}[ -]?{tienen},({honderd}+{tienen})
+honderden,{honderd} ?en ?{tienen},({honderd}+{tienen})
 duizend,duizend,1000
-duizend,{tien} honderd,{tien}*100
-duizend,{1} duizend,{1}*1000
-duizenden,{duizend} {1},({duizend}+{1})
-duizenden,{duizend} en {1},({duizend}+{1})
-duizenden,{tien} {getal},({tien}*100+{getal})
-duizenden,{groot:tien} {klein:tien},({groot}*100+{klein})
-duizenden,{tien} {tienvoud},({tien}*100+{tienvoud})
-duizenden,{tien} {tienen},({tien}*100+{tienen})
+duizend,{tien}[ -]?honderd,{tien}*100
+duizend,{1}[ -]?duizend,{1}*1000
+duizenden,{duizend}[ -]?{1},({duizend}+{1})
+duizenden,{duizend} ?en ?{1},({duizend}+{1})
+duizenden,{tien}[ -]?{getal},({tien}*100+{getal})
+duizenden,{groot:tien}[ -]?{klein:tien},({groot}*100+{klein})
+duizenden,{tien}[ -]?{tienvoud},({tien}*100+{tienvoud})
+duizenden,{tien}[ -]?{tienen},({tien}*100+{tienen})
