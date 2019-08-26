@@ -1,6 +1,6 @@
 import unittest
 
-from historic_hebrew_dates.annotation_parser import get_patterns
+from historic_hebrew_dates.grammars.annotation_grammar import get_patterns
 
 class TestAnnotationParser(unittest.TestCase):
     def test_parse(self):

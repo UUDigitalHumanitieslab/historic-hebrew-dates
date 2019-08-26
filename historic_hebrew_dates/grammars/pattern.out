@@ -1,0 +1,346 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> pattern
+Rule 1     pattern -> words
+Rule 2     pattern -> sub
+Rule 3     pattern -> words sub
+Rule 4     pattern -> words sub pattern
+Rule 5     pattern -> sub pattern
+Rule 6     sub -> LBRACE WORD RBRACE
+Rule 7     sub -> LBRACE NUMBER RBRACE
+Rule 8     sub -> LBRACE WORD COLON WORD RBRACE
+Rule 9     sub -> LBRACE WORD COLON NUMBER RBRACE
+Rule 10    sub -> LBRACE WORD NUMBER COLON WORD RBRACE
+Rule 11    sub -> LBRACE WORD NUMBER RBRACE
+Rule 12    words -> WORD
+Rule 13    words -> NUMBER
+Rule 14    words -> NUMBER words
+Rule 15    words -> WORD words
+
+Terminals, with rules where they appear
+
+COLON                : 8 9 10
+LBRACE               : 6 7 8 9 10 11
+NUMBER               : 7 9 10 11 13 14
+RBRACE               : 6 7 8 9 10 11
+WORD                 : 6 8 8 9 10 10 11 12 15
+error                : 
+
+Nonterminals, with rules where they appear
+
+pattern              : 4 5 0
+sub                  : 2 3 4 5
+words                : 1 3 4 14 15
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . pattern
+    (1) pattern -> . words
+    (2) pattern -> . sub
+    (3) pattern -> . words sub
+    (4) pattern -> . words sub pattern
+    (5) pattern -> . sub pattern
+    (12) words -> . WORD
+    (13) words -> . NUMBER
+    (14) words -> . NUMBER words
+    (15) words -> . WORD words
+    (6) sub -> . LBRACE WORD RBRACE
+    (7) sub -> . LBRACE NUMBER RBRACE
+    (8) sub -> . LBRACE WORD COLON WORD RBRACE
+    (9) sub -> . LBRACE WORD COLON NUMBER RBRACE
+    (10) sub -> . LBRACE WORD NUMBER COLON WORD RBRACE
+    (11) sub -> . LBRACE WORD NUMBER RBRACE
+
+    WORD            shift and go to state 4
+    NUMBER          shift and go to state 5
+    LBRACE          shift and go to state 6
+
+    pattern                        shift and go to state 1
+    words                          shift and go to state 2
+    sub                            shift and go to state 3
+
+state 1
+
+    (0) S' -> pattern .
+
+
+
+state 2
+
+    (1) pattern -> words .
+    (3) pattern -> words . sub
+    (4) pattern -> words . sub pattern
+    (6) sub -> . LBRACE WORD RBRACE
+    (7) sub -> . LBRACE NUMBER RBRACE
+    (8) sub -> . LBRACE WORD COLON WORD RBRACE
+    (9) sub -> . LBRACE WORD COLON NUMBER RBRACE
+    (10) sub -> . LBRACE WORD NUMBER COLON WORD RBRACE
+    (11) sub -> . LBRACE WORD NUMBER RBRACE
+
+    $end            reduce using rule 1 (pattern -> words .)
+    LBRACE          shift and go to state 6
+
+    sub                            shift and go to state 7
+
+state 3
+
+    (2) pattern -> sub .
+    (5) pattern -> sub . pattern
+    (1) pattern -> . words
+    (2) pattern -> . sub
+    (3) pattern -> . words sub
+    (4) pattern -> . words sub pattern
+    (5) pattern -> . sub pattern
+    (12) words -> . WORD
+    (13) words -> . NUMBER
+    (14) words -> . NUMBER words
+    (15) words -> . WORD words
+    (6) sub -> . LBRACE WORD RBRACE
+    (7) sub -> . LBRACE NUMBER RBRACE
+    (8) sub -> . LBRACE WORD COLON WORD RBRACE
+    (9) sub -> . LBRACE WORD COLON NUMBER RBRACE
+    (10) sub -> . LBRACE WORD NUMBER COLON WORD RBRACE
+    (11) sub -> . LBRACE WORD NUMBER RBRACE
+
+    $end            reduce using rule 2 (pattern -> sub .)
+    WORD            shift and go to state 4
+    NUMBER          shift and go to state 5
+    LBRACE          shift and go to state 6
+
+    sub                            shift and go to state 3
+    pattern                        shift and go to state 8
+    words                          shift and go to state 2
+
+state 4
+
+    (12) words -> WORD .
+    (15) words -> WORD . words
+    (12) words -> . WORD
+    (13) words -> . NUMBER
+    (14) words -> . NUMBER words
+    (15) words -> . WORD words
+
+    LBRACE          reduce using rule 12 (words -> WORD .)
+    $end            reduce using rule 12 (words -> WORD .)
+    WORD            shift and go to state 4
+    NUMBER          shift and go to state 5
+
+    words                          shift and go to state 9
+
+state 5
+
+    (13) words -> NUMBER .
+    (14) words -> NUMBER . words
+    (12) words -> . WORD
+    (13) words -> . NUMBER
+    (14) words -> . NUMBER words
+    (15) words -> . WORD words
+
+    LBRACE          reduce using rule 13 (words -> NUMBER .)
+    $end            reduce using rule 13 (words -> NUMBER .)
+    WORD            shift and go to state 4
+    NUMBER          shift and go to state 5
+
+    words                          shift and go to state 10
+
+state 6
+
+    (6) sub -> LBRACE . WORD RBRACE
+    (7) sub -> LBRACE . NUMBER RBRACE
+    (8) sub -> LBRACE . WORD COLON WORD RBRACE
+    (9) sub -> LBRACE . WORD COLON NUMBER RBRACE
+    (10) sub -> LBRACE . WORD NUMBER COLON WORD RBRACE
+    (11) sub -> LBRACE . WORD NUMBER RBRACE
+
+    WORD            shift and go to state 11
+    NUMBER          shift and go to state 12
+
+
+state 7
+
+    (3) pattern -> words sub .
+    (4) pattern -> words sub . pattern
+    (1) pattern -> . words
+    (2) pattern -> . sub
+    (3) pattern -> . words sub
+    (4) pattern -> . words sub pattern
+    (5) pattern -> . sub pattern
+    (12) words -> . WORD
+    (13) words -> . NUMBER
+    (14) words -> . NUMBER words
+    (15) words -> . WORD words
+    (6) sub -> . LBRACE WORD RBRACE
+    (7) sub -> . LBRACE NUMBER RBRACE
+    (8) sub -> . LBRACE WORD COLON WORD RBRACE
+    (9) sub -> . LBRACE WORD COLON NUMBER RBRACE
+    (10) sub -> . LBRACE WORD NUMBER COLON WORD RBRACE
+    (11) sub -> . LBRACE WORD NUMBER RBRACE
+
+    $end            reduce using rule 3 (pattern -> words sub .)
+    WORD            shift and go to state 4
+    NUMBER          shift and go to state 5
+    LBRACE          shift and go to state 6
+
+    words                          shift and go to state 2
+    sub                            shift and go to state 3
+    pattern                        shift and go to state 13
+
+state 8
+
+    (5) pattern -> sub pattern .
+
+    $end            reduce using rule 5 (pattern -> sub pattern .)
+
+
+state 9
+
+    (15) words -> WORD words .
+
+    LBRACE          reduce using rule 15 (words -> WORD words .)
+    $end            reduce using rule 15 (words -> WORD words .)
+
+
+state 10
+
+    (14) words -> NUMBER words .
+
+    LBRACE          reduce using rule 14 (words -> NUMBER words .)
+    $end            reduce using rule 14 (words -> NUMBER words .)
+
+
+state 11
+
+    (6) sub -> LBRACE WORD . RBRACE
+    (8) sub -> LBRACE WORD . COLON WORD RBRACE
+    (9) sub -> LBRACE WORD . COLON NUMBER RBRACE
+    (10) sub -> LBRACE WORD . NUMBER COLON WORD RBRACE
+    (11) sub -> LBRACE WORD . NUMBER RBRACE
+
+    RBRACE          shift and go to state 14
+    COLON           shift and go to state 15
+    NUMBER          shift and go to state 16
+
+
+state 12
+
+    (7) sub -> LBRACE NUMBER . RBRACE
+
+    RBRACE          shift and go to state 17
+
+
+state 13
+
+    (4) pattern -> words sub pattern .
+
+    $end            reduce using rule 4 (pattern -> words sub pattern .)
+
+
+state 14
+
+    (6) sub -> LBRACE WORD RBRACE .
+
+    WORD            reduce using rule 6 (sub -> LBRACE WORD RBRACE .)
+    NUMBER          reduce using rule 6 (sub -> LBRACE WORD RBRACE .)
+    LBRACE          reduce using rule 6 (sub -> LBRACE WORD RBRACE .)
+    $end            reduce using rule 6 (sub -> LBRACE WORD RBRACE .)
+
+
+state 15
+
+    (8) sub -> LBRACE WORD COLON . WORD RBRACE
+    (9) sub -> LBRACE WORD COLON . NUMBER RBRACE
+
+    WORD            shift and go to state 18
+    NUMBER          shift and go to state 19
+
+
+state 16
+
+    (10) sub -> LBRACE WORD NUMBER . COLON WORD RBRACE
+    (11) sub -> LBRACE WORD NUMBER . RBRACE
+
+    COLON           shift and go to state 20
+    RBRACE          shift and go to state 21
+
+
+state 17
+
+    (7) sub -> LBRACE NUMBER RBRACE .
+
+    WORD            reduce using rule 7 (sub -> LBRACE NUMBER RBRACE .)
+    NUMBER          reduce using rule 7 (sub -> LBRACE NUMBER RBRACE .)
+    LBRACE          reduce using rule 7 (sub -> LBRACE NUMBER RBRACE .)
+    $end            reduce using rule 7 (sub -> LBRACE NUMBER RBRACE .)
+
+
+state 18
+
+    (8) sub -> LBRACE WORD COLON WORD . RBRACE
+
+    RBRACE          shift and go to state 22
+
+
+state 19
+
+    (9) sub -> LBRACE WORD COLON NUMBER . RBRACE
+
+    RBRACE          shift and go to state 23
+
+
+state 20
+
+    (10) sub -> LBRACE WORD NUMBER COLON . WORD RBRACE
+
+    WORD            shift and go to state 24
+
+
+state 21
+
+    (11) sub -> LBRACE WORD NUMBER RBRACE .
+
+    WORD            reduce using rule 11 (sub -> LBRACE WORD NUMBER RBRACE .)
+    NUMBER          reduce using rule 11 (sub -> LBRACE WORD NUMBER RBRACE .)
+    LBRACE          reduce using rule 11 (sub -> LBRACE WORD NUMBER RBRACE .)
+    $end            reduce using rule 11 (sub -> LBRACE WORD NUMBER RBRACE .)
+
+
+state 22
+
+    (8) sub -> LBRACE WORD COLON WORD RBRACE .
+
+    WORD            reduce using rule 8 (sub -> LBRACE WORD COLON WORD RBRACE .)
+    NUMBER          reduce using rule 8 (sub -> LBRACE WORD COLON WORD RBRACE .)
+    LBRACE          reduce using rule 8 (sub -> LBRACE WORD COLON WORD RBRACE .)
+    $end            reduce using rule 8 (sub -> LBRACE WORD COLON WORD RBRACE .)
+
+
+state 23
+
+    (9) sub -> LBRACE WORD COLON NUMBER RBRACE .
+
+    WORD            reduce using rule 9 (sub -> LBRACE WORD COLON NUMBER RBRACE .)
+    NUMBER          reduce using rule 9 (sub -> LBRACE WORD COLON NUMBER RBRACE .)
+    LBRACE          reduce using rule 9 (sub -> LBRACE WORD COLON NUMBER RBRACE .)
+    $end            reduce using rule 9 (sub -> LBRACE WORD COLON NUMBER RBRACE .)
+
+
+state 24
+
+    (10) sub -> LBRACE WORD NUMBER COLON WORD . RBRACE
+
+    RBRACE          shift and go to state 25
+
+
+state 25
+
+    (10) sub -> LBRACE WORD NUMBER COLON WORD RBRACE .
+
+    WORD            reduce using rule 10 (sub -> LBRACE WORD NUMBER COLON WORD RBRACE .)
+    NUMBER          reduce using rule 10 (sub -> LBRACE WORD NUMBER COLON WORD RBRACE .)
+    LBRACE          reduce using rule 10 (sub -> LBRACE WORD NUMBER COLON WORD RBRACE .)
+    $end            reduce using rule 10 (sub -> LBRACE WORD NUMBER COLON WORD RBRACE .)
+

@@ -2,7 +2,7 @@
 import re
 
 from .pattern_parser import PatternParser
-from typing import Iterator, Tuple
+from typing import cast, Iterator, Tuple
 
 
 class NumeralParser(PatternParser):
@@ -15,7 +15,7 @@ class NumeralParser(PatternParser):
             raise f'Unknown language {lang}'
 
     def eval(self, expression: str) -> int:
-        return eval(expression, {}, {})
+        return cast(int, eval(expression, {}, {}))
 
     def get_operators(self, operator: str, expression: str) -> Iterator[Tuple[int, int, int, int]]:
         for match in re.finditer(r'(?P<left>\d+)\\{operator}(?P<right>\d+)', expression):
