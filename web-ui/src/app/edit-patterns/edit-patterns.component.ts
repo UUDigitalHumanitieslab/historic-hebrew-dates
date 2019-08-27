@@ -10,6 +10,7 @@ interface Pattern {
   fields: {
     [field: string]: {
       value: string,
+      original: string,
       dir: 'ltr' | 'rtl',
       modified: boolean
     }
@@ -54,6 +55,7 @@ export class EditPatternsComponent implements OnChanges {
         ...Object.keys(cells).map(col => ({
           [col]: {
             value: cells[col],
+            original: cells[col],
             dir: this.patternService.textDirection(cells[col]),
             modified: false
           }
@@ -66,7 +68,7 @@ export class EditPatternsComponent implements OnChanges {
   onCellChange(pattern: Pattern, column: string) {
     const patternCell = pattern.fields[column];
     patternCell.dir = this.patternService.textDirection(patternCell.value);
-    patternCell.modified = true;
+    patternCell.modified = patternCell.original !== patternCell.value;
 
     this.nextRows();
   }

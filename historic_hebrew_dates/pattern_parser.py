@@ -69,7 +69,7 @@ class PatternParser:
                 search_patterns.append(search_pattern)
 
         self.grouped_patterns = grouped_patterns
-        self.search_pattern = self.__merge_patterns(search_patterns)
+        self.search_pattern = re.compile('\\b' + self.__merge_patterns(search_patterns) + '\\b', re.IGNORECASE)
 
     def parse(self, text: str, patterns: List[Tuple[Pattern, Pattern, str]]=None) -> Optional[str]:
         if patterns is None:
@@ -140,7 +140,12 @@ class PatternParser:
         return (var_name, sub_type)
 
     def __merge_patterns(self, patterns: List[Pattern]) -> str:
-        return f"({'|'.join(map(lambda p: cast(str, p.pattern), patterns))})"
+        # have the longest patterns first: try to match long patterns
+        # otherwise it is more likely to have multiple smaller matches
+        # e.g. two hundred would match 2 and 100 instead of 2*100 -> 200.
+        sorted = list(map(lambda p: cast(str, p.pattern), patterns))
+        sorted.sort(key=len, reverse=True)
+        return f"({'|'.join(sorted)})"
 
     def __compile_pattern(self,
                           parts: List[Dict[str, str]],
@@ -161,15 +166,18 @@ class PatternParser:
         pattern = ''
         for part in parts:
             if 'words' in part:
-                pattern += re.sub(r'[ \t\n]+', r'\\s*',
-                                  ' '.join(part['words']))
+                words = ' '.join(part['words'])
+                regularized_whitespace = re.sub(r'[ \t\n]+', r'\\s', words)
+                # text can contain multiple whitespaces or miss it, have some leniency
+                longer_whitespace = re.sub(r'\\s(?=[\w\{}])', r'\\s{0,3}', regularized_whitespace)
+                pattern += longer_whitespace
             else:
                 if part['type'] == 'backref':
                     sub_type_expression = self.__merge_patterns(
                         preceding_patterns)
                 elif part['type'] in self.child_patterns:
-                    sub_type_expression = self.child_patterns[part['type']
-                                                              ].search_pattern
+                    sub_type_expression = self.child_patterns[
+                        part['type']].search_pattern.pattern
                 else:
                     sub_type_expression = self.__merge_patterns(
                         list(map(lambda row: row[1], type_patterns[part['type']])))
@@ -178,4 +186,25 @@ class PatternParser:
                     pattern += f'(?P<{self.__group_name(part["name"], part["type"])}>{sub_type_expression})'
                 else:
                     pattern += sub_type_expression
-        return re.compile(pattern)
+        return re.compile(pattern, re.IGNORECASE)
+
+    def search(self, text):
+        pos = 0
+        for match in self.search_pattern.finditer(text):
+            (start, end) = match.span()
+            if start > pos:
+                yield {
+                    'text': text[pos:start]
+                }
+            pos = end
+            match_text = match.group(0)
+            parsed_text = self.parse(match_text)
+            yield {
+                'text': match_text,
+                'parsed': parsed_text,
+                'eval': self.eval(parsed_text)
+            }
+        if pos < len(text):
+            yield {
+                'text': text[pos:]
+            }

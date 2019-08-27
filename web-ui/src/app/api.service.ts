@@ -8,6 +8,20 @@ export interface Parse {
   error: boolean;
 }
 
+export interface SearchResult {
+  text: string;
+  parsed?: string;
+  eval?: string;
+}
+
+export type Search = {
+  result: SearchResult[];
+  error: false;
+} | {
+  result: string;
+  error: true;
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -56,5 +70,16 @@ export class ApiService {
       input,
       rows
     }).toPromise().catch(() => ({ expression: null, evaluated: null, error: true }));
+  }
+
+  async search<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
+    lang: Lang,
+    patternType: PatternType,
+    input: string,
+    rows: string[][]) {
+    return this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
+      input,
+      rows
+    }).toPromise().catch(() => ({ result: 'Technical problem during search.', error: true }));
   }
 }

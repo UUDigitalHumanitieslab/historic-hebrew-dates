@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import re
+import math
 
 from .pattern_parser import PatternParser
-from typing import cast, Iterator, Tuple
+from typing import cast, Union, Iterator, Tuple
 
 
 class NumeralParser(PatternParser):
@@ -14,8 +15,11 @@ class NumeralParser(PatternParser):
         else:
             raise f'Unknown language {lang}'
 
-    def eval(self, expression: str) -> int:
-        return cast(int, eval(expression, {}, {}))
+    def eval(self, expression: str) -> Union[int, float]:
+        try:
+            return cast(int, eval(expression, {}, {}))
+        except Exception as error:
+            return math.nan
 
     def get_operators(self, operator: str, expression: str) -> Iterator[Tuple[int, int, int, int]]:
         for match in re.finditer(r'(?P<left>\d+)\\{operator}(?P<right>\d+)', expression):

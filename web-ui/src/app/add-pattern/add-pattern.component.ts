@@ -6,6 +6,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
   styleUrls: ['./add-pattern.component.scss']
 })
 export class AddPatternComponent implements OnChanges {
+  @Input() dir: 'ltr' | 'rtl';
   @Input() types: string[];
   @Output() add = new EventEmitter<{
     type: string,
