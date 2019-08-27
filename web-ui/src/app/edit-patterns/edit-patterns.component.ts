@@ -1,4 +1,5 @@
-import { Component, EventEmitter, OnChanges, Input, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, Input, Output, ViewChild } from '@angular/core';
+import { Table } from 'primeng/table';
 
 import { faTrashAlt, faTrashRestoreAlt } from '@fortawesome/free-solid-svg-icons';
 
@@ -27,6 +28,9 @@ export class EditPatternsComponent implements OnChanges {
   @Input() patternType: string;
 
   @Output() rowsChange = new EventEmitter<string[][]>(true);
+
+  @ViewChild(Table)
+  table: Table;
 
   cols: { header: string, field: string }[];
   patterns: Pattern[];
@@ -71,6 +75,29 @@ export class EditPatternsComponent implements OnChanges {
     patternCell.modified = patternCell.original !== patternCell.value;
 
     this.nextRows();
+  }
+
+  onCellKeydown(row: HTMLTableRowElement, column: string, event: KeyboardEvent) {
+    let jumpRow: Element;
+    switch (event.keyCode) {
+      case 38:
+        // up
+        jumpRow = row.previousElementSibling;
+        break;
+      case 40:
+        // down
+        jumpRow = row.nextElementSibling;
+        break;
+
+      default:
+        return;
+    }
+
+    if (jumpRow) {
+      const cell = jumpRow.children[this.cols.findIndex(c => c.field === column)] as HTMLElement;
+      event.preventDefault();
+      cell.click();
+    }
   }
 
   toggleDelete(pattern: Pattern) {

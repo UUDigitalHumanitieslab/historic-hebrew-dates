@@ -8,12 +8,13 @@
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-pattern>
-    <tr [ngClass]="{'is-deleted': pattern.deleted }">
+    <tr [ngClass]="{'is-deleted': pattern.deleted }" #row>
       <td *ngFor="let col of cols" [dir]="pattern.fields[col.field].dir" pEditableColumn
         [ngClass]="{'is-modified': pattern.fields[col.field].modified}">
         <p-cellEditor>
           <ng-template pTemplate="input">
             <input type="text" class="cell-input" [(ngModel)]="pattern.fields[col.field].value" required
+              (keydown)="onCellKeydown(row, col.field, $event)"
               (keyup)="onCellChange(pattern, col.field)">
           </ng-template>
           <ng-template pTemplate="output">
