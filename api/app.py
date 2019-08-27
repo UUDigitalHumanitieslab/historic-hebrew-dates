@@ -17,7 +17,7 @@ app = Flask(__name__)
 def pattern_path(lang, type):
     path = os.path.join('historic_hebrew_dates', 'patterns', f'{lang}_{type}.csv')
     if not os.path.exists(path):
-        with open(path, "w+") as f:
+        with open(path, "w+", encoding='utf8') as f:
             f.write("type,pattern,value\n")
     return path
 
@@ -27,7 +27,7 @@ def overview():
     languages = {}
     for lang in glob.glob(os.path.join('historic_hebrew_dates', 'patterns', f'*.json')):
         key = os.path.splitext(os.path.basename(lang))[0]
-        with open(lang) as description:
+        with open(lang, encoding='utf-8-sig') as description:
             languages[key] = json.load(description)
     return jsonify(languages)
 

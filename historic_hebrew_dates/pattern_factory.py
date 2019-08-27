@@ -6,7 +6,7 @@ from .pattern_parser import PatternParser
 from .values import values
 
 def create_parsers(lang: str, override_rows: Dict[str, List[str]] = {}) -> Dict[str, PatternParser]:
-    with open(path.join(path.dirname(__file__), 'patterns', '%s.json' % lang)) as file:
+    with open(path.join(path.dirname(__file__), 'patterns', '%s.json' % lang), encoding='utf-8-sig') as file:
         specification = yaml.safe_load(file)
 
     parsers: Dict[str, PatternParser] = {}
