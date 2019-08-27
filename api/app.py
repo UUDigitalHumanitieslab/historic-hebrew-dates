@@ -15,7 +15,11 @@ app = Flask(__name__)
 
 
 def pattern_path(lang, type):
-    return os.path.join('historic_hebrew_dates', 'patterns', f'{lang}_{type}.csv')
+    path = os.path.join('historic_hebrew_dates', 'patterns', f'{lang}_{type}.csv')
+    if not os.path.exists(path):
+        with open(path, "w+") as f:
+            f.write("type,pattern,value\n")
+    return path
 
 
 @app.route("/api/patterns", methods=['GET'])
