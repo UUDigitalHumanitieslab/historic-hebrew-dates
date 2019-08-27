@@ -25,7 +25,7 @@
         },
         {
             "name": "dates",
-            "key": "datum",
+            "key": "date",
             "eval": "dict",
             "dependencies": [
                 "numerals",
