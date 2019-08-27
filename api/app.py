@@ -7,17 +7,9 @@ from flask import Flask, jsonify, request
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from historic_hebrew_dates import DateParser, DateTypeParser, MonthParser, NumeralParser
+from historic_hebrew_dates import create_parsers
 
 app = Flask(__name__)
-
-type_parsers = {
-    'dates': DateParser,
-    'date_types': DateTypeParser,
-    'months': MonthParser,
-    'numerals': NumeralParser
-}
-
 
 def pattern_path(lang, type):
     return os.path.join('historic_hebrew_dates', 'patterns', f'{lang}_{type}.csv')
@@ -48,7 +40,9 @@ def parse(lang, type):
     data = request.get_json()
     input = data['input']
     rows = data['rows']
-    parser = type_parsers[type](lang=lang, rows=rows)
+    parser = create_parsers(lang, override_rows={
+        type: rows
+    })[type]
     failure = False
     try:
         expression = parser.parse(input)
@@ -74,7 +68,9 @@ def search(lang, type):
     data = request.get_json()
     input = data['input']
     rows = data['rows']
-    parser = type_parsers[type](lang=lang, rows=rows)
+    parser = create_parsers(lang, override_rows={
+        type: rows
+    })[type]
     failure = False
     try:
         result = [escape_search(item) for item in list(parser.search(input))]

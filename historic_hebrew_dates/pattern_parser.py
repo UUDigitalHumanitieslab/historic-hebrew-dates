@@ -4,18 +4,19 @@ import os
 import re
 
 from collections import ChainMap
-from typing import cast, Dict, Iterator, List, Tuple, Pattern, Optional
+from typing import cast, Callable, Dict, Iterator, List, Tuple, Pattern, Optional
 from functools import reduce
 
 from .grammars.pattern_grammar import get_parts
 
 
 class PatternParser:
-    def __init__(self, filename: str, type: str, child_patterns=[], rows=None):
+    def __init__(self, filename: str, type: str, eval_func: Callable[[str], any], child_patterns=[], rows=None):
         self.type = type
         self.child_patterns: Dict[str, PatternParser] = {
             key: value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
         }
+        self.eval = eval_func
         if rows:
             self.__parse_rows(rows)
         else:
@@ -69,9 +70,10 @@ class PatternParser:
                 search_patterns.append(search_pattern)
 
         self.grouped_patterns = grouped_patterns
-        self.search_pattern = re.compile('\\b' + self.__merge_patterns(search_patterns) + '\\b', re.IGNORECASE)
+        self.search_pattern = re.compile(
+            '\\b' + self.__merge_patterns(search_patterns) + '\\b', re.IGNORECASE)
 
-    def parse(self, text: str, patterns: List[Tuple[Pattern, Pattern, str]]=None) -> Optional[str]:
+    def parse(self, text: str, evaluate=False, patterns: List[Tuple[Pattern, Pattern, str]]=None) -> Optional[str]:
         if patterns is None:
             patterns = cast(
                 List[Tuple[Pattern, Pattern, str]],
@@ -109,20 +111,22 @@ class PatternParser:
                             pass
                         elif sub_type in self.child_patterns:
                             sub_parse = self.child_patterns[sub_type].parse(
-                                sub_text)
+                                sub_text,
+                                evaluate)
                         else:
                             sub_patterns = self.grouped_patterns[sub_type]
                         if sub_parse is None:
                             sub_parse = self.parse(
                                 sub_text,
+                                evaluate,
                                 sub_patterns)
                         if sub_parse is None:
                             return None
                     expression = re.sub(
                         '\{' + var_name + '\}',
-                        sub_parse,
+                        str(sub_parse),
                         expression)
-                return expression
+                return self.eval(expression) if evaluate else expression
         return None
 
     def __group_name(self, var_name: str, sub_type: str):
@@ -169,7 +173,8 @@ class PatternParser:
                 words = ' '.join(part['words'])
                 regularized_whitespace = re.sub(r'[ \t\n]+', r'\\s', words)
                 # text can contain multiple whitespaces or miss it, have some leniency
-                longer_whitespace = re.sub(r'\\s(?=[\w\{}])', r'\\s{0,3}', regularized_whitespace)
+                longer_whitespace = re.sub(
+                    r'\\s(?=[\w\{}])', r'\\s{0,3}', regularized_whitespace)
                 pattern += longer_whitespace
             else:
                 if part['type'] == 'backref':
@@ -198,11 +203,10 @@ class PatternParser:
                 }
             pos = end
             match_text = match.group(0)
-            parsed_text = self.parse(match_text)
             yield {
                 'text': match_text,
-                'parsed': parsed_text,
-                'eval': self.eval(parsed_text)
+                'parsed': self.parse(match_text),
+                'eval': self.parse(match_text, True)
             }
         if pos < len(text):
             yield {

@@ -1,0 +1,33 @@
+{
+    "display": "Dutch",
+    "patterns": [
+        {
+            "type": "numerals",
+            "key": "מספר",
+            "eval": "numeral"
+        },
+        {
+            "type": "months",
+            "key": "חודש",
+            "eval": "numeral",
+            "dependencies": [
+                "numerals"
+            ]
+        },
+        {
+            "type": "date_types",
+            "key": "טיפוס",
+            "eval": "text"
+        },
+        {
+            "type": "dates",
+            "key": "תאריך",
+            "eval": "dict",
+            "dependencies": [
+                "numerals",
+                "date_types",
+                "months"
+            ]
+        }
+    ]
+}

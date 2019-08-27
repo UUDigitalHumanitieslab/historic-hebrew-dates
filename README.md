@@ -4,12 +4,25 @@
 
 Python library and console application for extracting Hebrew and Aramaic dates from historic texts.
 
-Running from project:
+## Running from the Console
 
 ```bash
 $ python -m historic_hebrew_dates שבע מאות וחמישים וארבע
 > 7*100+5*10+4
 > 754
+```
+
+## From Code
+
+```python
+from historic_hebrew_dates import create_parsers
+hebrew = create_parsers('hebrew')
+
+result = hebrew['numerals'].parse('שבע מאות וחמישים וארבע')
+print(result) # ((7*100+5*10)+4)
+
+result = hebrew['numerals'].parse('שבע מאות וחמישים וארבע', True)
+print(result) # 754
 ```
 
 # Getting it to Work
