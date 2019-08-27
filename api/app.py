@@ -68,7 +68,7 @@ def parse(lang, type):
             failure = True
         else:
             try:
-                evaluated = str(parser.eval(expression))
+                evaluated = str(parser.parse(input, True))
             except Exception as error:
                 evaluated = str(error)
                 failure = True

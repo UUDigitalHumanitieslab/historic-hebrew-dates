@@ -1,0 +1,37 @@
+{
+    "display": "English",
+    "direction": "ltr",
+    "patterns": [
+        {
+            "name": "numerals",
+            "key": "number",
+            "eval": "numeral"
+        },
+        {
+            "name": "ordinals",
+            "key": "ordinal",
+            "eval": "numeral",
+            "dependencies": [
+                "numerals"
+            ]
+        },
+        {
+            "name": "months",
+            "key": "month",
+            "eval": "numeral",
+            "dependencies": [
+                "numerals"
+            ]
+        },
+        {
+            "name": "dates",
+            "key": "datum",
+            "eval": "dict",
+            "dependencies": [
+                "numerals",
+                "ordinals",
+                "months"
+            ]
+        }
+    ]
+}

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 export interface Parse {
@@ -85,7 +85,11 @@ export class ApiService {
     return this.httpClient.post<Parse>(`/api/parse/${lang}/${patternType}`, {
       input,
       rows
-    }).toPromise().catch(() => ({ expression: null, evaluated: null, error: true }));
+    }).toPromise().catch((error: HttpErrorResponse) => {
+      alert(error.statusText);
+      console.error(error);
+      return { expression: null, evaluated: null, error: true };
+    });
   }
 
   async search(

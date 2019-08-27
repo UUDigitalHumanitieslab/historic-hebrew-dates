@@ -182,8 +182,12 @@ class PatternParser:
                     sub_type_expression = self.__merge_patterns(
                         preceding_patterns)
                 elif part['type'] in self.child_patterns:
+                    # remove the \b before and after the pattern
+                    # a pattern could specify affixes of this subtype
+                    # those should be supported: so the word breaks
+                    # should be removed
                     sub_type_expression = self.child_patterns[
-                        part['type']].search_pattern.pattern
+                        part['type']].search_pattern.pattern[2:-2]
                 else:
                     sub_type_expression = self.__merge_patterns(
                         list(map(lambda row: row[1], type_patterns[part['type']])))
