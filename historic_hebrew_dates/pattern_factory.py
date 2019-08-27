@@ -9,7 +9,7 @@ def create_parsers(lang: str, override_rows: Dict[str, List[str]] = {}) -> Dict[
     with open(path.join(path.dirname(__file__), 'patterns', '%s.json' % lang)) as file:
         specification = yaml.safe_load(file)
 
-    parsers = {}
+    parsers: Dict[str, PatternParser] = {}
 
     for pattern in specification['patterns']:
         name = pattern['name']

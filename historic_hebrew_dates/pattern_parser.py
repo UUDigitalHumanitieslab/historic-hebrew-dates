@@ -4,6 +4,7 @@ import os
 import re
 
 from collections import ChainMap
+import typing
 from typing import cast, Callable, Dict, Iterator, List, Tuple, Pattern, Optional
 from functools import reduce
 
@@ -11,7 +12,7 @@ from .grammars.pattern_grammar import get_parts
 
 
 class PatternParser:
-    def __init__(self, filename: str, type: str, eval_func: Callable[[str], any], child_patterns=[], rows=None):
+    def __init__(self, filename: str, type: str, eval_func: Callable[[str], typing.Any], child_patterns=[], rows=None):
         self.type = type
         self.child_patterns: Dict[str, PatternParser] = {
             key: value for (key, value) in map(lambda pattern: (pattern.type, pattern), child_patterns)
