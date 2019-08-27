@@ -1,13 +1,14 @@
 {
-    "display": "Dutch",
+    "display": "Hebrew",
+    "direction": "rtl",
     "patterns": [
         {
-            "type": "numerals",
+            "name": "numerals",
             "key": "מספר",
             "eval": "numeral"
         },
         {
-            "type": "months",
+            "name": "months",
             "key": "חודש",
             "eval": "numeral",
             "dependencies": [
@@ -15,12 +16,12 @@
             ]
         },
         {
-            "type": "date_types",
+            "name": "date_types",
             "key": "טיפוס",
             "eval": "text"
         },
         {
-            "type": "dates",
+            "name": "dates",
             "key": "תאריך",
             "eval": "dict",
             "dependencies": [

@@ -1,13 +1,14 @@
 {
     "display": "Dutch",
+    "direction": "ltr",
     "patterns": [
         {
-            "type": "numerals",
+            "name": "numerals",
             "key": "nummer",
             "eval": "numeral"
         },
         {
-            "type": "months",
+            "name": "months",
             "key": "maand",
             "eval": "numeral",
             "dependencies": [
@@ -15,7 +16,7 @@
             ]
         },
         {
-            "type": "dates",
+            "name": "dates",
             "key": "datum",
             "eval": "dict",
             "dependencies": [

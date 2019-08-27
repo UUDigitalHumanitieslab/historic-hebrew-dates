@@ -3,7 +3,7 @@ import { Component, EventEmitter, OnChanges, Input, Output } from '@angular/core
 import { faTrashAlt, faTrashRestoreAlt } from '@fortawesome/free-solid-svg-icons';
 
 import { ApiService } from '../api.service';
-import { Language, LanguagePattern, PatternsService } from '../patterns.service';
+import { PatternsService } from '../patterns.service';
 
 interface Pattern {
   deleted: boolean;
@@ -23,8 +23,8 @@ interface Pattern {
   styleUrls: ['./edit-patterns.component.scss']
 })
 export class EditPatternsComponent implements OnChanges {
-  @Input() language: Language;
-  @Input() patternType: LanguagePattern<Language>;
+  @Input() language: string;
+  @Input() patternType: string;
 
   @Output() rowsChange = new EventEmitter<string[][]>(true);
 

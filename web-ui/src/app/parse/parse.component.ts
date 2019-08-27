@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { faCheck, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 
 import { ApiService, SearchResult } from '../api.service';
-import { Language, LanguagePattern, PatternsService } from '../patterns.service';
+import { PatternsService } from '../patterns.service';
 import { NotificationsService } from '../notifications.service';
 
 
@@ -12,8 +12,8 @@ import { NotificationsService } from '../notifications.service';
   styleUrls: ['./parse.component.scss']
 })
 export class ParseComponent implements OnInit {
-  @Input() language: Language;
-  @Input() patternType: LanguagePattern<Language>;
+  @Input() language: string;
+  @Input() patternType: string;
   @Input() rows: string[][];
 
   checkDoubleIcon = faCheckDouble;

@@ -12,13 +12,13 @@ def create_parsers(lang: str, override_rows: Dict[str, List[str]] = {}) -> Dict[
     parsers = {}
 
     for pattern in specification['patterns']:
-        type = pattern['type']
+        name = pattern['name']
         dependencies = list(map(lambda subtype: parsers[subtype], (pattern.get('dependencies') or [])))
-        parsers[type] = PatternParser(
-            '%s_%s.csv' % (lang, type),
+        parsers[name] = PatternParser(
+            '%s_%s.csv' % (lang, name),
             pattern['key'],
             values[pattern['eval']],
             dependencies,
-            override_rows.get(type))
+            override_rows.get(name))
 
     return parsers

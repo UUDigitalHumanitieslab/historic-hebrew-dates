@@ -1,6 +1,8 @@
 import os
 import sys
+import glob
 import csv
+import json
 import traceback
 
 from flask import Flask, jsonify, request
@@ -11,8 +13,19 @@ from historic_hebrew_dates import create_parsers
 
 app = Flask(__name__)
 
+
 def pattern_path(lang, type):
     return os.path.join('historic_hebrew_dates', 'patterns', f'{lang}_{type}.csv')
+
+
+@app.route("/api/patterns", methods=['GET'])
+def overview():
+    languages = {}
+    for lang in glob.glob(os.path.join('historic_hebrew_dates', 'patterns', f'*.json')):
+        key = os.path.splitext(os.path.basename(lang))[0]
+        with open(lang) as description:
+            languages[key] = json.load(description)
+    return jsonify(languages)
 
 
 @app.route("/api/patterns/<lang>/<type>", methods=['GET'])
@@ -80,6 +93,7 @@ def search(lang, type):
         failure = True
 
     return jsonify({'result': result, 'error': failure})
+
 
 def escape_search(item):
     if 'eval' in item:
