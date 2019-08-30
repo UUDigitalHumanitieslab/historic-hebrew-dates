@@ -1,18 +1,45 @@
 @import '~bulma/bulma';
 
 body .ui-table .ui-table-tbody>tr {
-    &.is-deleted {
-        color: lightgray;
-        text-decoration: line-through;
+  &.is-deleted {
+    color: lightgray;
+    text-decoration: line-through;
+  }
+
+  >td {
+    &[dir="rtl"] {
+      text-align: right;
     }
 
-    >td {
-        &[dir="rtl"] {
-            text-align: right;
-        }
-
-        &.is-modified {
-            background: lighten($info, 20%);
-        }
+    &.is-modified {
+      background: lighten($warning, 20%);
     }
+
+    &.ui-editing-cell {
+      // keeps the input field on the same position as the display
+      padding: 0.571em 0.857em;
+    }
+  }
+}
+
+.is-match {
+  background: $primary;
+  color: $primary-invert;
+}
+
+[dir="rtl"] {
+  .ui-autocomplete-dd {
+    .ui-autocomplete-dropdown.ui-corner-all {
+      border-radius: 3px 0 0 3px;
+    }
+
+    input.ui-corner-all,
+    .ui-autocomplete-multiple-container.ui-corner-all {
+      border-radius: 0 3px 3px 0;
+    }
+
+    .ui-autocomplete-list-item {
+      text-align: right;
+    }
+  }
 }

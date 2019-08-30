@@ -1,4 +1,4 @@
 ﻿type,pattern,value
-compleet,{dag:nummer} {maand} {jaar:nummer},"[dag: '{dag}', maand: {maand}, jaar: '{jaar}']"
+compleet,{dag:nummer} {maand} {jaar:nummer},"[dag: {dag}, maand: {maand}, jaar: {jaar}]"
 zonder_jaar,{dag:nummer} {maand},"[dag: '{dag}', maand: {maand}]"
-compleet,{dag:nummer}-{maand}-{jaar:nummer},"[dag: '{dag}', maand: {maand}, jaar: '{jaar}']"
+compleet,{dag:nummer}-{maand}-{jaar:nummer},"[dag: {dag}, maand: {maand}, jaar: {jaar}]"

@@ -1,8 +1,14 @@
-﻿<form (ngSubmit)="tryParse()">
+﻿<form (ngSubmit)="tryParse()" *ngIf="mode=='parse'">
   <div class="field has-addons">
+    <div class="control">
+      <button class="button" title="Search a text for parts matching the pattern." (click)="toggleMode(); false" type="button">
+        <span class="icon is-small">
+          <fa-icon [icon]="checkDoubleIcon"></fa-icon>
+        </span>
+      </button>
+    </div>
     <div class="control is-expanded">
-      <input class="input" type="text" name="value" [(ngModel)]="value"
-        [dir]="language == 'hebrew' ? 'rtl' : 'ltr'" />
+      <input class="input" type="text" name="value" [(ngModel)]="value" [dir]="dir" />
     </div>
     <div class="control">
       <button class="button is-primary" type="submit" [ngClass]="{'is-loading': loading}"
@@ -10,4 +16,36 @@
     </div>
   </div>
 </form>
-
+<form (ngSubmit)="trySearch()" *ngIf="mode=='search'">
+  <div class="field is-grouped">
+    <div class="control">
+      <button class="button" title="Check whether a specific text matches a pattern." (click)="toggleMode(); false">
+        <span class="icon is-small">
+          <fa-icon [icon]="checkIcon"></fa-icon>
+        </span>
+      </button>
+    </div>
+    <div class="control is-expanded">
+      <textarea class="textarea" type="text" name="value" [(ngModel)]="value" [dir]="dir"></textarea>
+      <div *ngIf="searchLines" class="box search-result" [dir]="dir">
+        <p *ngFor="let line of searchLines">
+          <ng-container *ngFor="let part of line">
+            <span *ngIf="part.parsed !== undefined; else plain" class="is-match">
+              {{part.text}}
+              <span class="tag tooltip is-medium is-dark">
+                {{part.parsed}} {{dir === 'ltr' ? '→' : '←'}} {{part.eval}}
+              </span>
+            </span>
+            <ng-template #plain>
+              <span>{{part.text}}</span>
+            </ng-template>
+          </ng-container>
+        </p>
+      </div>
+    </div>
+    <div class="control">
+      <button class="button is-primary" type="submit" [ngClass]="{'is-loading': loading}"
+        title="It will search using any of the modifications made on this table.">Search</button>
+    </div>
+  </div>
+</form>

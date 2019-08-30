@@ -1,0 +1,9 @@
+﻿type,pattern,value
+american,"{month} {day:ordinal}, {year:number}","[day: {day}, month: {month}, year: {year}]"
+american,"{month} {day:number}, {year:number}","[day: {day}, month: {month}, year: {year}]"
+american,{month} {day:number},"[day: {day}, month: {month}]"
+american,{month} {day:ordinal},"[day: {day}, month: {month}]"
+british,"{day:ordinal} of {month}, {year:number}","[day: {day}, month: {month}, year: {year}]"
+british,{day:ordinal} {month} {year:number},"[day: {day}, month: {month}, year: {year}]"
+british,{day:ordinal} of {month},"[day: {day}, month: {month}]"
+british,{day:number} {month} {year:number},"[day: {day}, month: {month}, year: {year}]"

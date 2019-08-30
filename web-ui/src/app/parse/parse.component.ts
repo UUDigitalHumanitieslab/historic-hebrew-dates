@@ -1,7 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ApiService, Parse } from '../api.service';
-import { Language, LanguagePattern, PatternsService } from '../patterns.service';
+import { faCheck, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+
+import { ApiService, SearchResult } from '../api.service';
+import { PatternsService } from '../patterns.service';
 import { NotificationsService } from '../notifications.service';
+
 
 @Component({
   selector: 'dh-parse',
@@ -9,12 +12,20 @@ import { NotificationsService } from '../notifications.service';
   styleUrls: ['./parse.component.scss']
 })
 export class ParseComponent implements OnInit {
-  @Input() language: Language;
-  @Input() patternType: LanguagePattern<Language>;
+  @Input() language: string;
+  @Input() patternType: string;
   @Input() rows: string[][];
 
+  checkDoubleIcon = faCheckDouble;
+  checkIcon = faCheck;
   value: string;
   loading = false;
+  mode: 'parse' | 'search' = 'parse';
+  searchLines: SearchResult[][];
+
+  get dir() {
+    return this.language === 'hebrew' ? 'rtl' : 'ltr';
+  }
 
   constructor(
     private apiService: ApiService,
@@ -22,6 +33,17 @@ export class ParseComponent implements OnInit {
     private notificationService: NotificationsService) { }
 
   ngOnInit() {
+  }
+
+  toggleMode() {
+    this.searchLines = null;
+    this.mode = this.mode === 'parse' ? 'search' : 'parse';
+    // split or merge lines using three spaces
+    if (this.mode === 'parse') {
+      this.value = this.value.split('\n').join('   ').replace('\r', '');
+    } else {
+      this.value = this.value.split('   ').join('\n');
+    }
   }
 
   async tryParse() {
@@ -36,6 +58,40 @@ export class ParseComponent implements OnInit {
       message = 'No pattern matched!';
     }
     this.notificationService.show(message, parse.expression ? 'success' : 'error', dir);
+    this.loading = false;
+  }
+
+  async trySearch() {
+    this.loading = true;
+    this.searchLines = null;
+    this.notificationService.clear();
+    const search = await this.apiService.search(this.language, this.patternType, this.value, this.rows);
+
+    if (search.error) {
+      this.notificationService.show(search.result, 'error', 'ltr');
+    } else {
+      const result = search.result as SearchResult[];
+
+      // splits the lines
+      this.searchLines = result.reduce((list, item) => {
+        const lines = item.text.split('\n');
+        const last = list[list.length - 1];
+        const firstLine = lines.shift();
+        last.push({
+          eval: item.eval,
+          parsed: item.parsed,
+          text: firstLine
+        });
+
+        list.push(...lines.map(line => ([{
+          eval: item.eval,
+          parsed: item.parsed,
+          text: line
+        }])));
+
+        return list;
+      }, [[]] as SearchResult[][]);
+    }
     this.loading = false;
   }
 }

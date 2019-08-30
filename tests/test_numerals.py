@@ -6,7 +6,7 @@ import csv
 import os
 import unittest
 
-from historic_hebrew_dates.numeral_parser import NumeralParser
+from historic_hebrew_dates import create_parsers
 
 class TestNumerals(unittest.TestCase):
     """
@@ -15,7 +15,7 @@ class TestNumerals(unittest.TestCase):
 
     def test_numerals(self):
         def test_lang(lang, expected_filename):
-            parser = NumeralParser(lang=lang)
+            parser = create_parsers(lang)['numerals']
             with open(os.path.join(os.path.dirname(__file__), expected_filename), encoding='utf8') as numerals:
                 reader = csv.reader(numerals)
                 for row in reader:
@@ -23,7 +23,7 @@ class TestNumerals(unittest.TestCase):
                     parsed = parser.parse(text)
                     if not parsed:
                         self.fail(f'Parse failed for: {text} ({lang}), expected: {expected}')
-                    else:                        
+                    else:
                         evaluated = parser.eval(parsed)
                         self.assertEqual(
                             evaluated,

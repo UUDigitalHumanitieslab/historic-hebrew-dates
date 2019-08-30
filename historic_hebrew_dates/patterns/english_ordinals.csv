@@ -1,0 +1,25 @@
+﻿type,pattern,value
+word,first,1
+word,second,2
+word,third,3
+word,fourth,4
+word,fifth,5
+word,sixth,6
+word,seventh,7
+word,eight,8
+word,ninth,9
+word,tenth,10
+word,twelfth,12
+word,twentieth,20
+word,thirtieth,30
+word,fortieth,40
+word,fiftieth,50
+word,sixtieth,60
+word,seventieth,70
+word,eightieth,80
+word,ninetieth,90
+suffix,{number}th,{number}
+suffix,{number}rd,{number}
+suffix,{number}nd,{number}
+suffix,{number}st,{number}
+composed,{number}( and | ?){word},({number}+{word})

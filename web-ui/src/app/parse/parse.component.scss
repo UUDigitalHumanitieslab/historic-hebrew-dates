@@ -1,0 +1,25 @@
+.search-result {
+  margin-top: 1em;
+
+  &[dir="rtl"] {
+    text-align: right;
+  }
+}
+
+.is-match {
+  position: relative;
+  display: inline-block;
+
+  .tooltip {
+    position: absolute;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 1;
+  }
+
+  &:hover .tooltip {
+    display: block;
+    opacity: 1;
+  }
+}

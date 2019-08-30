@@ -2,7 +2,10 @@
 import sys
 import re
 from .annotated_corpus import AnnotatedCorpus
-from .numeral_parser import NumeralParser
+from .pattern_factory import create_parsers
+
+
+def NumeralParser(): return create_parsers('hebrew')['numerals']
 
 
 def main(args=None):
@@ -22,6 +25,7 @@ def main(args=None):
             print(expression)
             evaluated = parser.eval(expression)
             print(evaluated)
+
 
 def initial_patterns():
     c = AnnotatedCorpus()

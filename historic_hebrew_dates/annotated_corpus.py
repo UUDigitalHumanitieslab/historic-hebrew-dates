@@ -7,8 +7,18 @@ import pandas as pd
 from bidi.algorithm import get_display
 
 from .grammars.annotation_grammar import get_patterns
-from .date_type_parser import DateTypeParser
-from .numeral_parser import NumeralParser
+from .pattern_factory import create_parsers
+
+parsers = create_parsers('hebrew')
+
+
+def DateTypeParser():
+    return parsers['date_types']
+
+
+def NumeralParser():
+    return parsers['numerals']
+
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -120,12 +130,15 @@ class AnnotatedCorpus:
                 print(f'Unknown tag: {tag}')
             elif pattern:
                 if translated_tag in ['age', 'date']:
-                    subtags = list(map(lambda match: match.groups()[0], re.finditer(r'\{(\w+)(:\w+|)\}', pattern)))
+                    subtags = list(map(lambda match: match.groups()[
+                                   0], re.finditer(r'\{(\w+)(:\w+|)\}', pattern)))
                     if len(subtags) != len(set(subtags)):
                         print(f"Duplicate tags in {pattern}")
                         print(row)
                     else:
-                        value ='[' + ', '.join(map(lambda tag: f'{tag}: \'{tag}\'', subtags)) + ']'
+                        value = '[' + \
+                            ', '.join(
+                                map(lambda tag: f'{tag}: \'{tag}\'', subtags)) + ']'
                         aggr_patterns[translated_tag][pattern] = value
                 elif translated_tag == 'year':
                     value = row['Year'] if context == 'date' else row['Age at Death']
@@ -144,7 +157,8 @@ class AnnotatedCorpus:
                 elif translated_tag == 'month':
                     aggr_patterns[translated_tag][pattern] = row['Month']
                 else:
-                    raise Exception(f'Unknown tag: {translated_tag} in {pattern}')
+                    raise Exception(
+                        f'Unknown tag: {translated_tag} in {pattern}')
 
     def aggr_patterns(self):
         date_df = pd.concat(
@@ -182,7 +196,8 @@ class AnnotatedCorpus:
 
         #
         # Dates
-        max_number, known_date_patterns = self.load_known_patterns('hebrew_dates.csv')
+        max_number, known_date_patterns = self.load_known_patterns(
+            'hebrew_dates.csv')
         new_date_patterns = []
 
         for date_pattern, value in aggr_patterns['date'].items():
@@ -191,7 +206,8 @@ class AnnotatedCorpus:
 
         #
         # Months
-        max_number, known_month_patterns = self.load_known_patterns('hebrew_months.csv')
+        max_number, known_month_patterns = self.load_known_patterns(
+            'hebrew_months.csv')
         new_month_patterns = []
 
         for month_pattern, value in aggr_patterns['month'].items():
@@ -214,7 +230,8 @@ class AnnotatedCorpus:
             if not date_type_parser.parse(date_type_pattern.replace('\\w*', '')):
                 if value != 'From the destruction of the Temple':
                     raise Exception(f"Unknown date type {value}")
-                new_date_type_patterns += [('Destruction temple', date_type_pattern, 'קדש')]
+                new_date_type_patterns += [('Destruction temple',
+                                            date_type_pattern, 'קדש')]
 
         self.append_patterns('hebrew_date_types.csv', new_date_type_patterns)
         self.append_patterns('hebrew_dates.csv', new_date_patterns)
@@ -252,7 +269,9 @@ class AnnotatedCorpus:
                 return str_value
 
         with open(os.path.join(os.path.dirname(__file__), 'patterns', filename), mode='a', encoding='utf8') as f:
-            f.write('\n'.join(map(lambda  row: ','.join(map(lambda cell: escape_cell(cell), row)), patterns)))
+            f.write('\n'.join(map(lambda row: ','.join(
+                map(lambda cell: escape_cell(cell), row)), patterns)))
+
 
 def parse_level_parentheses(string, open='{', close='}'):
     """ Parse a single level of matching brackets """
