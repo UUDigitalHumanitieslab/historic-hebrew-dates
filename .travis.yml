@@ -17,9 +17,7 @@ before_install:
   - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
 install:
   - yarn global add chromedriver geckodriver webdriver
-  - pip install virtualenv
 script:
-  - source .env/bin/activate
   - yarn
   - yarn build
   - yarn start &
