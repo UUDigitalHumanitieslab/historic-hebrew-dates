@@ -12,6 +12,10 @@ export class NotificationsService {
 
   constructor() { }
 
+  clear() {
+    this.subject.next(undefined);
+  }
+
   show(message: string, type: NotificationType, dir: 'ltr' | 'rtl' = 'ltr') {
     this.subject.next({ message, type, dir });
   }

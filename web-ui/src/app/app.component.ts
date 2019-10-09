@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 
-import { Language, LanguagePattern } from './patterns.service';
 import { LanguageSelection } from './select-language/select-language.component';
 import { ApiService } from './api.service';
 import { NotificationsService } from './notifications.service';
@@ -14,8 +13,8 @@ import { NotificationsService } from './notifications.service';
 })
 export class AppComponent {
   title = 'historic-hebrew-dates-ui';
-  language: Language;
-  patternType: LanguagePattern<Language>;
+  language: string;
+  patternType: string;
   rows: string[][] = undefined;
   saveIcon = faSave;
   saving = false;
@@ -23,7 +22,7 @@ export class AppComponent {
   constructor(private apiService: ApiService, private notificationService: NotificationsService) {
   }
 
-  select(selection: LanguageSelection<Language>) {
+  select(selection: LanguageSelection) {
     this.language = selection.language;
     this.patternType = selection.patternType;
   }

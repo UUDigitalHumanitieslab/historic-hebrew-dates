@@ -1,0 +1,34 @@
+{
+    "display": "Hebrew",
+    "direction": "rtl",
+    "patterns": [
+        {
+            "name": "numerals",
+            "key": "מספר",
+            "eval": "numeral"
+        },
+        {
+            "name": "months",
+            "key": "חודש",
+            "eval": "numeral",
+            "dependencies": [
+                "numerals"
+            ]
+        },
+        {
+            "name": "date_types",
+            "key": "טיפוס",
+            "eval": "text"
+        },
+        {
+            "name": "dates",
+            "key": "תאריך",
+            "eval": "dict",
+            "dependencies": [
+                "numerals",
+                "date_types",
+                "months"
+            ]
+        }
+    ]
+}

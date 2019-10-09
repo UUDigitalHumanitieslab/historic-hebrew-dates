@@ -1,0 +1,28 @@
+{
+    "display": "Dutch",
+    "direction": "ltr",
+    "patterns": [
+        {
+            "name": "numerals",
+            "key": "nummer",
+            "eval": "numeral"
+        },
+        {
+            "name": "months",
+            "key": "maand",
+            "eval": "numeral",
+            "dependencies": [
+                "numerals"
+            ]
+        },
+        {
+            "name": "dates",
+            "key": "datum",
+            "eval": "dict",
+            "dependencies": [
+                "numerals",
+                "months"
+            ]
+        }
+    ]
+}

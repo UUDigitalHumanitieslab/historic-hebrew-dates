@@ -1,11 +1,37 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Language, LanguagePattern } from './patterns.service';
 
 export interface Parse {
   expression: string;
   evaluated: string;
   error: boolean;
+}
+
+export interface SearchResult {
+  text: string;
+  parsed?: string;
+  eval?: string;
+}
+
+export type Search = {
+  result: SearchResult[];
+  error: false;
+} | {
+  result: string;
+  error: true;
+};
+
+export interface LanguagePatterns {
+  [language: string]: {
+    display: string;
+    direction: 'ltr' | 'rtl';
+    patterns: {
+      eval: string,
+      key: string,
+      name: string,
+      dependencies?: string[]
+    }[]
+  };
 }
 
 @Injectable({
@@ -14,7 +40,11 @@ export interface Parse {
 export class ApiService {
   constructor(private httpClient: HttpClient) { }
 
-  async get<Lang extends Language, PatternType extends LanguagePattern<Lang>>(lang: Lang, patternType: PatternType) {
+  async overview() {
+    return this.httpClient.get<LanguagePatterns>(`/api/patterns`).toPromise();
+  }
+
+  async get(lang: string, patternType: string) {
     const raw = await this.httpClient.get<string[][]>(`/api/patterns/${lang}/${patternType}`).toPromise();
 
     // first row is the header
@@ -28,9 +58,9 @@ export class ApiService {
     return { fields, patterns };
   }
 
-  async put<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
-    lang: Lang,
-    patternType: PatternType,
+  async put(
+    lang: string,
+    patternType: string,
     rows: string[][]) {
     const result = await this.httpClient.put<{ success: boolean, message: string }>(
       `/api/patterns/${lang}/${patternType}`, {
@@ -47,14 +77,29 @@ export class ApiService {
     return { success: true };
   }
 
-  async parse<Lang extends Language, PatternType extends LanguagePattern<Lang>>(
-    lang: Lang,
-    patternType: PatternType,
+  async parse(
+    lang: string,
+    patternType: string,
     input: string,
     rows: string[][]) {
     return this.httpClient.post<Parse>(`/api/parse/${lang}/${patternType}`, {
       input,
       rows
-    }).toPromise().catch(() => ({ expression: null, evaluated: null, error: true }));
+    }).toPromise().catch((error: HttpErrorResponse) => {
+      alert(error.statusText);
+      console.error(error);
+      return { expression: null, evaluated: null, error: true };
+    });
+  }
+
+  async search(
+    lang: string,
+    patternType: string,
+    input: string,
+    rows: string[][]) {
+    return this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
+      input,
+      rows
+    }).toPromise().catch(() => ({ result: 'Technical problem during search.', error: true }));
   }
 }

@@ -7,8 +7,7 @@ import os
 import unittest
 import yaml
 
-from historic_hebrew_dates.date_parser import DateParser
-from historic_hebrew_dates.date_type_parser import DateTypeParser
+from historic_hebrew_dates import create_parsers
 
 class TestDates(unittest.TestCase):
     """
@@ -16,7 +15,7 @@ class TestDates(unittest.TestCase):
     """
 
     def test_date_types(self):
-        parser = DateTypeParser()
+        parser = create_parsers('hebrew')['date_types']
         with open(os.path.join(os.path.dirname(__file__), 'hebrew_date_types.csv'), encoding='utf8') as date_types:
             reader = csv.reader(date_types)
             for row in reader:
@@ -29,7 +28,7 @@ class TestDates(unittest.TestCase):
 
     def test_dates(self):
         def test_lang(lang, expected_filename):
-            parser = DateParser(lang=lang)
+            parser = create_parsers(lang)['dates']
             skipped = 0
             with open(os.path.join(os.path.dirname(__file__), expected_filename), encoding='utf8') as dates:
                 reader = csv.reader(dates)
@@ -42,10 +41,10 @@ class TestDates(unittest.TestCase):
                     if not expression:
                         self.fail(f'Parse failed for: {text}, expected: {expected}')
                     else:
-                        self.assertDictEqual(yaml.safe_load(expected), parser.eval(expression),
+                        self.assertDictEqual(yaml.safe_load(expected), parser.parse(text, True),
                             text)
             if skipped > 0:
                 print(f'SKIPPED {skipped} rows for {lang}!')
-        
+
         test_lang('dutch', 'dutch_dates.csv')
         test_lang('hebrew', 'hebrew_dates.csv')

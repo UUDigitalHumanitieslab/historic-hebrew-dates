@@ -1,9 +1,10 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { PatternsService, Language, LanguagePattern } from '../patterns.service';
+import { PatternsService } from '../patterns.service';
+import { LanguagePatterns } from '../api.service';
 
-export interface LanguageSelection<T extends Language> {
-  language: T;
-  patternType: LanguagePattern<T>;
+export interface LanguageSelection {
+  language: string;
+  patternType: string;
 }
 
 @Component({
@@ -12,33 +13,39 @@ export interface LanguageSelection<T extends Language> {
   styleUrls: ['./select-language.component.scss']
 })
 export class SelectLanguageComponent implements OnInit {
-  @Output() select = new EventEmitter<LanguageSelection<any>>();
+  @Output() select = new EventEmitter<LanguageSelection>();
 
-  selectedLanguage: Language;
+  selectedLanguage: string;
   selectedPattern: string;
 
-  languageList: { name: Language, display: string }[];
+  languageList: { name: string, display: string, direction: 'rtl' | 'ltr' }[];
   patterns: { name: string, display: string }[];
 
-  private languages: ReturnType<PatternsService['languages']>;
+  private languages: LanguagePatterns;
 
   constructor(private patternsService: PatternsService) {
   }
 
   async ngOnInit() {
     this.languages = await this.patternsService.languages();
-    this.languageList = Object.keys(this.languages)
-      .map((name: Language) => ({ name, display: this.languages[name].display }));
+    this.languageList = Object.entries(this.languages).map(([name, item]) => ({
+      name,
+      display: item.display,
+      direction: item.direction
+    }));
 
     this.selectedLanguage = this.languageList[0].name;
-    this.selectedPattern = Object.keys(this.languages[this.selectedLanguage])[0];
+    this.selectedPattern = this.languages[this.selectedLanguage].patterns[0].name;
 
     this.emit();
   }
 
   emit() {
     const patterns = this.languages[this.selectedLanguage].patterns;
-    this.patterns = Object.keys(patterns).map((pattern) => ({ name: pattern, display: patterns[pattern] }));
+    this.patterns = patterns.map((pattern) => ({
+      name: pattern.name,
+      display: `${pattern.name} {${pattern.key}}`
+    }));
     if (!this.patterns.find(p => p.name === this.selectedPattern)) {
       this.selectedPattern = this.patterns[0].name;
     }

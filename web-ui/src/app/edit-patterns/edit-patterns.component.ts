@@ -1,15 +1,17 @@
-import { Component, EventEmitter, OnChanges, Input, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, Input, Output, ViewChild } from '@angular/core';
+import { Table } from 'primeng/table';
 
 import { faTrashAlt, faTrashRestoreAlt } from '@fortawesome/free-solid-svg-icons';
 
 import { ApiService } from '../api.service';
-import { Language, LanguagePattern, PatternsService } from '../patterns.service';
+import { PatternsService } from '../patterns.service';
 
 interface Pattern {
   deleted: boolean;
   fields: {
     [field: string]: {
       value: string,
+      original: string,
       dir: 'ltr' | 'rtl',
       modified: boolean
     }
@@ -22,10 +24,13 @@ interface Pattern {
   styleUrls: ['./edit-patterns.component.scss']
 })
 export class EditPatternsComponent implements OnChanges {
-  @Input() language: Language;
-  @Input() patternType: LanguagePattern<Language>;
+  @Input() language: string;
+  @Input() patternType: string;
 
   @Output() rowsChange = new EventEmitter<string[][]>(true);
+
+  @ViewChild(Table)
+  table: Table;
 
   cols: { header: string, field: string }[];
   patterns: Pattern[];
@@ -54,6 +59,7 @@ export class EditPatternsComponent implements OnChanges {
         ...Object.keys(cells).map(col => ({
           [col]: {
             value: cells[col],
+            original: cells[col],
             dir: this.patternService.textDirection(cells[col]),
             modified: false
           }
@@ -66,9 +72,32 @@ export class EditPatternsComponent implements OnChanges {
   onCellChange(pattern: Pattern, column: string) {
     const patternCell = pattern.fields[column];
     patternCell.dir = this.patternService.textDirection(patternCell.value);
-    patternCell.modified = true;
+    patternCell.modified = patternCell.original !== patternCell.value;
 
     this.nextRows();
+  }
+
+  onCellKeydown(row: HTMLTableRowElement, column: string, event: KeyboardEvent) {
+    let jumpRow: Element;
+    switch (event.keyCode) {
+      case 38:
+        // up
+        jumpRow = row.previousElementSibling;
+        break;
+      case 40:
+        // down
+        jumpRow = row.nextElementSibling;
+        break;
+
+      default:
+        return;
+    }
+
+    if (jumpRow) {
+      const cell = jumpRow.children[this.cols.findIndex(c => c.field === column)] as HTMLElement;
+      event.preventDefault();
+      cell.click();
+    }
   }
 
   toggleDelete(pattern: Pattern) {
