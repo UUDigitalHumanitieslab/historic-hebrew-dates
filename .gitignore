@@ -116,4 +116,5 @@ node_modules/
 .vscode/
 
 # epidat data
-data/epidat/
+data/epidat/TEI
+data/epidat/records_files

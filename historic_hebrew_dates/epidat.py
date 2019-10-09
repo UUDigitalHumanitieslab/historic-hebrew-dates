@@ -10,8 +10,6 @@ import os
 import dateutil
 from bs4 import BeautifulSoup
 
-from historic_hebrew_dates.date_parser import DateParser
-
 
 def harvest_records_files():
     overview_url = 'http://www.steinheim-institut.de/cgi-bin/epidat?info=howtoharvest'
@@ -34,6 +32,7 @@ def harvest_records_files():
 
 def harvest_all_dbs():
     file_list = glob.glob('data/epidat/records_files/*.xml')
+
     for i, filename in enumerate(file_list):
         print(f'{i}/{len(file_list)}')
         try:
@@ -51,61 +50,68 @@ def harvest_tei(records_file):
     size = sum(1 for _ in tree.iter())
     for elem in tree.iter():
         if elem.tag == 'resource':
-            data = urlopen(elem.attrib['href'])
             file_path = f'data/epidat/TEI/{db_id}/{elem.attrib["id"]}.xml'
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'wb') as f:
-                f.write(data.read())
+            if not os.path.exists(file_path):
+                data = urlopen(elem.attrib['href'])
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, 'wb') as f:
+                    f.write(data.read())
         i += 1
         print(f'{db_id}:\t\t{i}/{size}', end='\r')
 
 
-def extract_inscriptions():
-    file_list = glob.glob('data/*/*.xml', recursive=True)
+def extract_database(database_name):
+    record_list = sorted(glob.glob(
+        f'data/epidat/TEI/{database_name}/*.xml', recursive=True))
 
-    with open('data/epidat_worms_transcriptions.xml', 'w') as wf:
+    with open(f'data/epidat/transcriptions/{database_name}.xml', 'w') as f:
         csv_writer = csv.writer(
-            wf, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         csv_writer.writerow(["id", "transcription", "year", "month", "day"])
 
-        for file_path in sorted(file_list):
-            fields = {
-                'file_id': Path(file_path).name.rstrip('.xml'),
-                'transcription': None,
-                'year': None,
-                'month': None,
-                'day': None
-            }
-
-            with open(file_path) as f:
-                soup = BeautifulSoup(f.read(), 'lxml')
-
-                try:
-                    edition = soup.find('div', {'type': 'edition'})
-                    ab = edition.find('ab').text
-                    lines = [l.lstrip().rstrip() for l in ab.splitlines()]
-                    non_empty_lines = [l for l in lines if len(l) > 0]
-                    fields['transcription'] = ' '.join(non_empty_lines)
-                except:
-                    pass
-
-                try:
-                    # TODO: multiple people in one inscription
-                    person = soup.find('person')
-                    death = person.find('death')
-                    when = death['when']
-                    parsed = dateutil.parser.parse(when)
-                    fields['year'], fields['month'], fields['day'] = parsed.year, parsed.month, parsed.day
-                except:
-                    pass
-
-                csv_writer.writerow(fields.values())
+        for record in record_list:
+            csv_writer.writerow(extract_record(record).values())
 
 
-def extract_dates(transcriptions_file, search_pattern):
-    data = csv.DictReader(open(transcriptions_file))
-    for entry in data:
-        match = re.match(search_pattern, entry['transcription'])
+def extract_record(record_path):
+    fields = {
+        'file_id': Path(record_path).name.rstrip('.xml'),
+        'transcription': None,
+        'year': None,
+        'month': None,
+        'day': None
+    }
+
+    with open(record_path) as f:
+        soup = BeautifulSoup(f.read(), 'lxml')
+
+        try:
+            edition = soup.find('div', {'type': 'edition'})
+            ab = edition.find('ab').text
+            lines = [l.lstrip().rstrip() for l in ab.splitlines()]
+            non_empty_lines = [l for l in lines if len(l) > 0]
+            fields['transcription'] = ' '.join(non_empty_lines)
+        except:
+            pass
+
+        try:
+            # TODO: multiple people in one inscription
+            person = soup.find('person')
+            death = person.find('death')
+            when = death['when']
+            parsed = dateutil.parser.parse(when)
+            fields['year'], fields['month'], fields['day'] = parsed.year, parsed.month, parsed.day
+        except:
+            pass
+
+    return fields
+
+
+def extract_inscriptions():
+    databases = [os.path.basename(os.path.normpath(path))
+                 for path in sorted(glob.glob('data/epidat/TEI/*/'))]
+    for db in databases:
+        ins = extract_database(db)
 
 
 def main():
@@ -114,7 +120,8 @@ def main():
     # parser = DateParser(lang='hebrew')
     # extract_dates('data/epidat_worms_transcriptions.xml',
     #               parser.search_pattern)
-    harvest_all_dbs()
+
+    extract_inscriptions()
 
 
 if __name__ == '__main__':
