@@ -27,6 +27,22 @@ print(result) # 754
 
 # Getting the Editor to Work
 
+## Using Vagrant
+
+On a machine without developer tools it's probably most convenient to use [Vagrant](https://www.vagrantup.com/docs/installation/) for running the editor.
+
+Once this has been setup run the following from a terminal at the root directory of this project:
+
+```bash
+vagrant up
+```
+
+Wait for everything to be ready (can take a few minutes), then it should be possible to go
+to http://localhost:4200. Changes made to the patterns can be send back
+to this repository using [Git](https://git-scm.com/).
+
+## Locally
+
 * Install [Python 3.6](https://www.python.org) or newer and make sure to include pip.
 * Install [node](https://nodejs.org).
 * Install [yarn](https://yarnpkg.com).
