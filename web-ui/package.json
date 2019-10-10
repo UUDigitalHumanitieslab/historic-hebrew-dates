@@ -11,6 +11,7 @@
     "build:he": "ng build --configuration=production-he",
     "i18n": "ng xi18n --output-path locale",
     "serve": "ng serve --liveReload=false --proxy-config ../proxy.conf.json",
+    "serve:poll": "ng serve --poll=2000 --host 0.0.0.0 --liveReload=false --proxy-config ../proxy.conf.json",
     "serve:en": "ng serve --liveReload=false --proxy-config ../proxy.conf.json --configuration=en",
     "serve:nl": "ng serve --liveReload=false --proxy-config ../proxy.conf.json --configuration=nl",
     "serve:he": "ng serve --liveReload=false --proxy-config ../proxy.conf.json --configuration=he",
