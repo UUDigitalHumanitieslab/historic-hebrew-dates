@@ -9,6 +9,7 @@ import os
 
 import dateutil
 from bs4 import BeautifulSoup
+import pandas as pd
 
 
 def harvest_records_files():
@@ -60,11 +61,18 @@ def harvest_tei(records_file):
         print(f'{db_id}:\t\t{i}/{size}', end='\r')
 
 
+def extract_inscriptions():
+    databases = [os.path.basename(os.path.normpath(path))
+                 for path in sorted(glob.glob('data/epidat/TEI/*/'))]
+    for db in databases:
+        ins = extract_database(db)
+
+
 def extract_database(database_name):
     record_list = sorted(glob.glob(
         f'data/epidat/TEI/{database_name}/*.xml', recursive=True))
 
-    with open(f'data/epidat/transcriptions/{database_name}.xml', 'w') as f:
+    with open(f'data/epidat/transcriptions/{database_name}.csv', 'w') as f:
         csv_writer = csv.writer(
             f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         csv_writer.writerow(["id", "transcription", "year", "month", "day"])
@@ -107,11 +115,12 @@ def extract_record(record_path):
     return fields
 
 
-def extract_inscriptions():
-    databases = [os.path.basename(os.path.normpath(path))
-                 for path in sorted(glob.glob('data/epidat/TEI/*/'))]
-    for db in databases:
-        ins = extract_database(db)
+def combine_inscriptions():
+    file_list = glob.glob('data/epidat/transcriptions/*.csv')
+    df = pd.concat([pd.read_csv(f) for f in file_list], ignore_index=True)
+    df = df.dropna()
+    df[['year', 'month', 'day']] = df[['year', 'month', 'day']].astype(int)
+    return df
 
 
 def main():
@@ -120,8 +129,8 @@ def main():
     # parser = DateParser(lang='hebrew')
     # extract_dates('data/epidat_worms_transcriptions.xml',
     #               parser.search_pattern)
-
-    extract_inscriptions()
+    # extract_inscriptions()
+    df = combine_inscriptions()
 
 
 if __name__ == '__main__':
