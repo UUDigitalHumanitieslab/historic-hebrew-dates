@@ -28,9 +28,9 @@ class ChartParser:
             self.current_positions[i] = 0
 
         # no matches, matches at their position
-        # containing their associated PatternMatcher and inclusive
-        # end position
-        self.matches = cast(List[List[Tuple[PatternMatcher, int]]], [])
+        # containing their associated PatternMatcher, inclusive
+        # end position and filled templates
+        self.matches = cast(List[List[Tuple[PatternMatcher, int, List[str]]]], [])
 
     def input(self, tokens: List[str]):
         self.tokens += tokens
@@ -49,11 +49,14 @@ class ChartParser:
                 self.matches.append([])
 
             # matched types on this position
-            types = set()
-            for match, _ in self.matches[current_position]:
-                types.add(match.type)
+            matches = cast(Dict[str, List[str]], {})
+            for match, _, values in self.matches[current_position]:
+                try:
+                    matches[match.type] += values
+                except KeyError:
+                    matches[match.type] = list(values)
 
-            if  matcher.test(self.tokens[current_position], types):
+            if matcher.test(self.tokens[current_position], matches):
                 has_more = self.__continue_rule(
                     index,
                     matcher,
@@ -65,7 +68,7 @@ class ChartParser:
                         index,
                         current_position):
                     # can the rule continue?
-                    if matcher.test(self.tokens[current_position], types):
+                    if matcher.test(self.tokens[current_position], matches):
                         has_more = self.__continue_rule(
                             index,
                             matcher, current_position,
@@ -97,7 +100,7 @@ class ChartParser:
         if matcher.next():
             # completed match!
             self.matches[self.start_positions[index]].append(
-                (matcher, current_position))
+                (matcher, current_position, matcher.emit()))
             matcher.reset()
             self.start_positions[index] = self.current_positions[index]
         return self.__check_for_more(index, has_more)
@@ -134,8 +137,8 @@ class ChartParser:
         return True
 
     def __str__(self):
-        def format_token_matches(matches: List[Tuple[PatternMatcher, int]]):
-            return ", ".join(f":{end_position} {pattern_matcher}" for (pattern_matcher, end_position) in matches)
+        def format_token_matches(matches: List[Tuple[PatternMatcher, int, List[str]]]):
+            return ", ".join(f":{end_position} {pattern_matcher} -> {';'.join(values)}" for (pattern_matcher, end_position, values) in matches)
 
         formatted_tokens = (
             f"{i}:{format_token_matches(self.matches[i])}" for i in range(0, len(self.matches)))
