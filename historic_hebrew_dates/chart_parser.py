@@ -1,9 +1,10 @@
 from typing import cast, List, Dict, Tuple, Set
+from functools import reduce
 from .pattern_matcher import PatternMatcher
 
 
 class ChartParser:
-    def __init__(self, agenda: List[PatternMatcher]):
+    def __init__(self, agenda: List[PatternMatcher], child_parses: Dict[str, ChartParser] = None):
         self.agenda = agenda
 
         # each matcher is shifted individually accross the data set
@@ -15,6 +16,7 @@ class ChartParser:
         # could be looking for "a" after having already found "this is"
         # in the two preceding tokens
         self.current_positions = cast(Dict[int, int], {})
+        self.child_parses = child_parses or {}
         self.reset()
 
     def reset(self):
@@ -30,7 +32,8 @@ class ChartParser:
         # no matches, matches at their position
         # containing their associated PatternMatcher, inclusive
         # end position and filled templates
-        self.matches = cast(List[List[Tuple[PatternMatcher, int, List[str]]]], [])
+        self.matches = cast(
+            List[List[Tuple[PatternMatcher, int, List[str]]]], [])
 
     def input(self, tokens: List[str]):
         self.tokens += tokens
@@ -55,6 +58,14 @@ class ChartParser:
                     matches[match.type] += values
                 except KeyError:
                     matches[match.type] = list(values)
+
+            for type, parser in self.child_parses.items():
+                child_values = reduce(
+                    list.__add__, parser.matches[current_position].values())
+                try:
+                    matches[type] += child_values
+                except KeyError:
+                    matches[match.type] = child_values
 
             if matcher.test(self.tokens[current_position], matches):
                 has_more = self.__continue_rule(
@@ -90,6 +101,10 @@ class ChartParser:
                     has_more)
 
         return has_more
+
+    def process_all(self):
+        while self.iterate():
+            pass
 
     def __continue_rule(self,
                         index: int,

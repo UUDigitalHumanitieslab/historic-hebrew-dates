@@ -5,10 +5,13 @@ import re
 
 from collections import ChainMap
 import typing
-from typing import cast, Callable, Dict, Iterator, List, Tuple, Pattern, Optional
+from typing import cast, Callable, Dict, Iterator, List, Set, Tuple, Pattern, Optional
 from functools import reduce
 
 from .grammars.pattern_grammar import get_parts
+from .chart_parser import ChartParser
+from .pattern_matcher import PatternMatcher
+from historic_hebrew_dates.pattern_matcher import BackrefPart, ChildPart, TokenPart, TypePart
 
 
 class PatternParser:
@@ -43,36 +46,20 @@ class PatternParser:
                 grouped_patterns_str[pattern_type] = []
             grouped_patterns_str[pattern_type].append((pattern, expression))
 
-        search_patterns: List[Pattern] = []
-
-        # Patterns by type. For each item in the tuple:
-        # 0: the extraction pattern
-        # 1: the search pattern
-        # 2: the expression to evaluate
-        grouped_patterns: Dict[str, List[Tuple[Pattern, Pattern, str]]] = {}
-
+        matchers = cast(List[PatternMatcher], [])
+        tokens = cast(Set[str], set())
         for pattern_type in pattern_type_order:
-            grouped_patterns[pattern_type] = []
             for i, (pattern, expression) in enumerate(grouped_patterns_str[pattern_type]):
                 parts = get_parts(pattern)
-                extraction_pattern = self.__compile_pattern(
-                    parts,
-                    grouped_patterns,
-                    search_patterns,
-                    True)
-                search_pattern = self.__compile_pattern(
-                    parts,
-                    grouped_patterns,
-                    search_patterns,
-                    False)
+                matcher = self.__compile_matcher(
+                    pattern_type,
+                    expression,
+                    parts)
+                # TODO: emit tokens
 
-                grouped_patterns[pattern_type].append(
-                    (extraction_pattern, search_pattern, expression))
-                search_patterns.append(search_pattern)
+                matchers.append(matcher)
 
-        self.grouped_patterns = grouped_patterns
-        self.search_pattern = re.compile(
-            '\\b' + self.__merge_patterns(search_patterns) + '\\b', re.IGNORECASE)
+        self.parser = ChartParser(matchers)
 
     def parse(self, text: str, evaluate=False, patterns: List[Tuple[Pattern, Pattern, str]]=None) -> Optional[str]:
         if patterns is None:
@@ -152,55 +139,58 @@ class PatternParser:
         sorted.sort(key=len, reverse=True)
         return f"({'|'.join(sorted)})"
 
-    def __compile_pattern(self,
-                          parts: List[Dict[str, str]],
-                          type_patterns: Dict[str, List[Tuple[Pattern, Pattern, str]]],
-                          preceding_patterns: List[Pattern],
-                          extraction: bool) -> Pattern:
-        """Compile the pattern from csv-file to an executable regular expression.
+    def __convert_part(self, part):
+        if 'words' in part:
+            words = ' '.join(part['words']).lower()
+            regularized_whitespace = re.sub(r'[ \t\n]+', ' ', words)
+            tokens = re.split(' -', regularized_whitespace)
+            return [TokenPart(token) for token in tokens]
+        else:
+            if part['type'] == 'backref':
+                return [BackrefPart(part['name'])]
+            elif part['type'] in self.child_patterns:
+                return [ChildPart(part['type'], part['name'])]
+            else:
+                return [TypePart(part['type'], part['name'])]
+
+    def __compile_matcher(self, pattern_type: str, expression: str, parts: List[Dict[str, str]]) -> PatternMatcher:
+        """Compile the pattern from csv-file to a matcher which can be used by the chart parter.
 
         Arguments:
+            pattern_type {str} -- The type name of this pattern.
+            expression {str} -- The expression template.
             parts {List[Dict[str, str]]} -- The evaluation result from the pattern grammar.
-            type_patterns {Dict[str, List[Tuple[Pattern, Pattern, str]]]} -- The dictionary of all the compiled patterns by type.
-            preceding_patterns {List[Pattern]} -- The patterns which have already been compiled.
-            extraction {bool} -- Whether the compilation should generate a named regular expression to allow for evaluation the associated expression.
 
         Returns:
-            Pattern -- The compiled regular expression
+            PatternMatcher -- The pattern matcher to apply
         """
         pattern = ''
-        for part in parts:
-            if 'words' in part:
-                words = ' '.join(part['words'])
-                regularized_whitespace = re.sub(r'[ \t\n]+', r'\\s', words)
-                # text can contain multiple whitespaces or miss it, have some leniency
-                longer_whitespace = re.sub(
-                    r'\\s(?=[\w\{}])', r'\\s{0,3}', regularized_whitespace)
-                pattern += longer_whitespace
-            else:
-                if part['type'] == 'backref':
-                    sub_type_expression = self.__merge_patterns(
-                        preceding_patterns)
-                elif part['type'] in self.child_patterns:
-                    # remove the \b before and after the pattern
-                    # a pattern could specify affixes of this subtype
-                    # those should be supported: so the word breaks
-                    # should be removed
-                    sub_type_expression = self.child_patterns[
-                        part['type']].search_pattern.pattern[2:-2]
-                else:
-                    sub_type_expression = self.__merge_patterns(
-                        list(map(lambda row: row[1], type_patterns[part['type']])))
+        return PatternMatcher(
+            pattern_type,
+            expression,
+            reduce(list.__add__, (self.__convert_part(part) for part in parts)))
 
-                if extraction:
-                    pattern += f'(?P<{self.__group_name(part["name"], part["type"])}>{sub_type_expression})'
-                else:
-                    pattern += sub_type_expression
-        return re.compile(pattern, re.IGNORECASE)
+    def search(self, text: str):
+        tokens = text.split(' ')
 
-    def search(self, text):
-        pos = 0
-        for match in self.search_pattern.finditer(text):
+        for parser in ([self] + self.child_patterns.values()):
+            parser.parser.reset()
+            parser.parser.input(tokens)
+
+            # TODO: they could be set to continue until they are
+            # fully done on this position
+            if parser != self:
+                parser.parser.process_all()
+
+        match_count = 0
+        while self.parser.iterate():
+            # TODO: this could be implemented in a streaming fashion
+            pass
+
+        return self.parser.matches
+
+    def __format_position_matches(self, matches: List[Tuple[PatternMatcher, int, List[str]]]):
+        for match in matches:
             (start, end) = match.span()
             if start > pos:
                 yield {
