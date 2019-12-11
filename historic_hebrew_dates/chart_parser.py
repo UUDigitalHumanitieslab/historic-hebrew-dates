@@ -1,6 +1,7 @@
 from typing import cast, List, Dict, Tuple, Set
 from functools import reduce
 from .pattern_matcher import PatternMatcher
+from historic_hebrew_dates.pattern_matcher import PatternMatcherState, TextSpan
 
 
 class ChartParser:
@@ -20,30 +21,50 @@ class ChartParser:
         self.reset()
 
     def reset(self):
-        self.position = 0
+        # self.position = 0
+        self.states = cast(List[PatternMatcherState], [])
+        for matcher in self.agenda:
+            # start with a state for each matcher
+            self.states.append(PatternMatcherState(matcher))
         self.tokens = cast(List[str], [])
 
         # everything starts at zero
         for i in range(0, len(self.agenda)):
             self.agenda[i].reset()
-            self.start_positions[i] = 0
-            self.current_positions[i] = 0
+            # self.start_positions[i] = 0
+            # self.current_positions[i] = 0
 
         # no matches, matches at their position
-        # containing their associated PatternMatcher, inclusive
-        # end position and filled templates
+        # containing their associated TextSpans
         self.matches = cast(
-            List[List[Tuple[PatternMatcher, int, List[str]]]], [])
+            List[List[TextSpan]], [])
 
     def input(self, tokens: List[str]):
-        self.tokens += tokens
+        position = len(self.tokens)
+        for token in tokens:
+            self.tokens.append(token)
+            position += 1
 
     def iterate(self) -> bool:
-        """Attempt to move all the matchers one token forward.
+        """Attempt to move all the states one token forward.
 
         Returns:
             bool -- Whether more parsing could be done on the data set
         """
+
+        has_more = False
+        for state in self.states:
+            blocked_by = state.blocked_by()
+            if blocked_by != None and not self.__block_cleared(blocked_by, state.position):
+                has_more = True
+            else:
+                # TODO: loop through all possible tokens and all possible
+                # matches
+                if state.position >= len(self.tokens):
+                    for span in [TextSpan(state.position, None, [self.tokens[state.position]])] \
+                        + self.matches[state.position]:
+                        state.test()
+
         has_more = False
         for index in range(0, len(self.agenda)):
             matcher = self.agenda[index]
@@ -135,21 +156,25 @@ class ChartParser:
         else:
             return True
 
-    def __block_cleared(self, type: str, rule_index: int, position: int):
-        # determine matches which need to finish before
-        # this is allowed to continue; only allow waiting
-        # for preceding rules
-        for i in range(0, rule_index):
-            if self.agenda[i].type == type:
-                if self.start_positions[i] < position:
-                    # this is blocking
-                    return False
-                elif self.start_positions[i] == position and \
-                        self.agenda[i].blocked_by_type:
-                    # this block is also blocked, that has to be
-                    # resolved first
-                    return False
+    def __block_cleared(self, type: str, position: int):
+        for state in self.states:
+            if state.type == type and state.start_position < position:
+                return False
         return True
+        # # determine matches which need to finish before
+        # # this is allowed to continue; only allow waiting
+        # # for preceding rules
+        # for i in range(0, rule_index):
+        #     if self.agenda[i].type == type:
+        #         if self.start_positions[i] < position:
+        #             # this is blocking
+        #             return False
+        #         elif self.start_positions[i] == position and \
+        #                 self.agenda[i].blocked_by_type:
+        #             # this block is also blocked, that has to be
+        #             # resolved first
+        #             return False
+        # return True
 
     def __str__(self):
         def format_token_matches(matches: List[Tuple[PatternMatcher, int, List[str]]]):

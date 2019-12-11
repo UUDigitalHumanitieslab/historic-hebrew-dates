@@ -52,11 +52,28 @@ class PatternMatcher:
 
 
 class PatternMatcherState():
-    def __init__(self, matcher: PatternMatcher):
+    def __init__(self, matcher: PatternMatcher, position: int = 0):
         self.matcher = matcher
 
-        self.blocking = cast(List[TokenPart], [])
-        self.reset()
+        self.index = 0
+        self.start_position = position
+        self.position = position
+
+        # contains the possible string values for each id present
+        # in this pattern
+        self.values = cast(Dict[str, List[str]], {})
+
+    def blocked_by(self) -> Union[str, None]:
+        """Whether this state depends on another type being parsed first.
+
+        Returns:
+            Union[str, None] -- The name of the type to wait for or None.
+        """
+        part = self.matcher.parts[self.index]
+        if isinstance(part, TypePart):
+            return cast(Union[str, None], part.type)
+        else:
+            return None
 
     def test(self, span: TextSpan) -> bool:
         """Test whether the current token matches the pattern.
@@ -66,33 +83,34 @@ class PatternMatcherState():
                 continuation
 
         Returns:
-            bool -- Whether this span matches and the pattern can continue,
-                if it doesn't match it could be because it didn't match
-                an other pattern type expected here. {blocked_by_type}
-                will be set to the type name in such a case.
+            bool -- Whether this span matches and the pattern can continue.
         """
         part = self.matcher.parts[self.index]
         if part.test(span):
-            if isinstance(part, TypePart):
-                # assign the value for this token
-                self.values[part.name] = span.text
             return True
-        if isinstance(part, TypePart):
-            self.blocked_by_type = cast(Union[str, None], part.type)
-        else:
-            self.blocked_by_type = None
         return False
 
-    def next(self) -> bool:
-        """Move the index forward within the pattern
+    def next(self, span: TextSpan) -> bool:
+        """Move the index forward within the pattern using the given span.
+        It is assumed that span fits the pattern (use {test()} to check).
+
+        Arguments:
+            span {TextSpan} -- Span to assign to this pattern position
+                if this is needed.
 
         Returns:
             bool -- Whether the pattern is complete
         """
+        part = self.matcher.parts[self.index]
+        if isinstance(part, TypePart):
+            # assign the value for this span
+            self.values[part.name] = span.text
+
         self.index += 1
+        self.position += part.len
         if self.index == len(self.parts):
-            self.complete = True
-        return self.complete
+            return True
+        return False
 
     def emit(self) -> List[str]:
         outputs = cast(List[str], [self.matcher.template])
@@ -103,14 +121,11 @@ class PatternMatcherState():
             outputs = transformed
         return outputs
 
-    def reset(self):
-        self.blocked_by_type = None
-        self.index = 0
-        self.complete = False
-
-        # contains the possible string values for each id present
-        # in this pattern
-        self.values = cast(Dict[str, List[str]], {})
+    def clone(self) -> PatternMatcherState:
+        clone = PatternMatcherState(self.matcher, self.position)
+        clone.index = self.index
+        clone.start_position = self.start_position
+        clone.values = {** self.values}
 
     def __fill_template(self, template: str, id: str, values: List[str]) -> List[str]:
         return [template.replace(f'{{{id}}}', value) for value in values]
@@ -121,14 +136,15 @@ class PatternMatcherState():
 
 
 class TextSpan:
-    def __init__(self, start: int, type: Union[str, None], tokens: List[str]):
+    def __init__(self, start: int, type: Union[str, None], tokens: List[str], len=None):
         self.start = start
         self.type = type
         self.tokens = tokens
+        self.len = cast(int, len or len(self.tokens))
 
     @property
     def end(self):
-        return self.start + len(self.tokens)
+        return self.start + self.len
 
     @property
     def text(self):
