@@ -1,11 +1,27 @@
-from typing import Dict, List, Union, Set, cast
+from typing import Dict, List, Union, Set, TypeVar, cast
+
+
+class TokenSpan:
+    def __init__(self, start: int, type: Union[str, None], tokens: List[str], len=None):
+        self.start = start
+        self.type = type
+        self.tokens = tokens
+        self.len = cast(int, len or len(self.tokens))
+
+    @property
+    def end(self):
+        return self.start + self.len
+
+    @property
+    def text(self):
+        return ' '.join(self.tokens)
 
 
 class TokenPart:
     def __init__(self, compare: str):
         self.text = compare
 
-    def test(self, span: TextSpan) -> bool:
+    def test(self, span: TokenSpan) -> bool:
         return self.text == span.text
 
     def __str__(self):
@@ -51,6 +67,9 @@ class PatternMatcher:
         self.parts = parts
 
 
+T = TypeVar('T', bound='PatternMatcherState')
+
+
 class PatternMatcherState():
     def __init__(self, matcher: PatternMatcher, position: int = 0):
         self.matcher = matcher
@@ -75,11 +94,11 @@ class PatternMatcherState():
         else:
             return None
 
-    def test(self, span: TextSpan) -> bool:
+    def test(self, span: TokenSpan) -> bool:
         """Test whether the current token matches the pattern.
 
         Arguments:
-            span {TextSpan} -- Span to test against for possible
+            span {TokenSpan} -- Span to test against for possible
                 continuation
 
         Returns:
@@ -90,12 +109,12 @@ class PatternMatcherState():
             return True
         return False
 
-    def next(self, span: TextSpan) -> bool:
+    def next(self, span: TokenSpan) -> bool:
         """Move the index forward within the pattern using the given span.
-        It is assumed that span fits the pattern (use {test()} to check).
+        It is assumed that the span fits the pattern (use {test()} to check).
 
         Arguments:
-            span {TextSpan} -- Span to assign to this pattern position
+            span {TokenSpan} -- Span to assign to this pattern position
                 if this is needed.
 
         Returns:
@@ -113,6 +132,7 @@ class PatternMatcherState():
         return False
 
     def emit(self) -> List[str]:
+        # TODO: emit a TokenSpan
         outputs = cast(List[str], [self.matcher.template])
         for id, values in self.values.items():
             transformed = cast(List[str], [])
@@ -121,7 +141,7 @@ class PatternMatcherState():
             outputs = transformed
         return outputs
 
-    def clone(self) -> PatternMatcherState:
+    def clone(self: T) -> T:
         clone = PatternMatcherState(self.matcher, self.position)
         clone.index = self.index
         clone.start_position = self.start_position
@@ -133,19 +153,3 @@ class PatternMatcherState():
     def __str__(self):
         parts_str = " ".join(str(part) for part in self.matcher.parts)
         return f"({self.type}) \"{parts_str}\""
-
-
-class TextSpan:
-    def __init__(self, start: int, type: Union[str, None], tokens: List[str], len=None):
-        self.start = start
-        self.type = type
-        self.tokens = tokens
-        self.len = cast(int, len or len(self.tokens))
-
-    @property
-    def end(self):
-        return self.start + self.len
-
-    @property
-    def text(self):
-        return ' '.join(self.tokens)

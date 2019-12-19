@@ -1,125 +1,162 @@
-from typing import cast, List, Dict, Tuple, Set
+from typing import cast, List, Dict, Tuple, Set, TypeVar
 from functools import reduce
 from .pattern_matcher import PatternMatcher
-from historic_hebrew_dates.pattern_matcher import PatternMatcherState, TextSpan
+from historic_hebrew_dates.pattern_matcher import PatternMatcherState, TokenSpan
+
+T = TypeVar('T', bound='ChartParser')
 
 
 class ChartParser:
-    def __init__(self, agenda: List[PatternMatcher], child_parses: Dict[str, ChartParser] = None):
+    def __init__(self: T, agenda: List[PatternMatcher], child_parses: Dict[str, T] = None):
         self.agenda = agenda
-
-        # each matcher is shifted individually accross the data set
-        # this records what their current starting positions are
-        self.start_positions = cast(Dict[int, int], {})
-
-        # these retain the current positions of the matcher itself
-        # for example the pattern "this is a test"
-        # could be looking for "a" after having already found "this is"
-        # in the two preceding tokens
-        self.current_positions = cast(Dict[int, int], {})
         self.child_parses = child_parses or {}
         self.reset()
 
     def reset(self):
-        # self.position = 0
+        # everything starts at zero
+        self.agenda_index = 0
+        self.token_indexes = cast(Dict[int, int], {})
+        for i in range(0, len(agenda)):
+            self.token_indexes[i] = 0
+
         self.states = cast(List[PatternMatcherState], [])
-        for matcher in self.agenda:
-            # start with a state for each matcher
-            self.states.append(PatternMatcherState(matcher))
         self.tokens = cast(List[str], [])
 
-        # everything starts at zero
-        for i in range(0, len(self.agenda)):
-            self.agenda[i].reset()
-            # self.start_positions[i] = 0
-            # self.current_positions[i] = 0
-
         # no matches, matches at their position
-        # containing their associated TextSpans
+        # containing their associated TokenSpans
         self.matches = cast(
-            List[List[TextSpan]], [])
+            List[List[TokenSpan]], [])
 
     def input(self, tokens: List[str]):
-        position = len(self.tokens)
+        # start at the lowest agenda again
+        self.agenda_index = 0
         for token in tokens:
             self.tokens.append(token)
-            position += 1
 
     def iterate(self) -> bool:
-        """Attempt to move all the states one token forward.
+        """Moves the current matcher one step forward, or shift to the
+        next matcher
 
         Returns:
             bool -- Whether more parsing could be done on the data set
         """
 
         has_more = False
-        for state in self.states:
-            blocked_by = state.blocked_by()
-            if blocked_by != None and not self.__block_cleared(blocked_by, state.position):
+        self.token_indexes[self.agenda_index] += 1
+        if self.token_indexes[self.agenda_index] < len(self.tokens):
+            has_more = True
+        else:
+            self.agenda_index += 1
+            if self.agenda_index < len(self.agenda_index):
                 has_more = True
-            else:
-                # TODO: loop through all possible tokens and all possible
-                # matches
-                if state.position >= len(self.tokens):
-                    for span in [TextSpan(state.position, None, [self.tokens[state.position]])] \
-                        + self.matches[state.position]:
-                        state.test()
 
-        has_more = False
-        for index in range(0, len(self.agenda)):
-            matcher = self.agenda[index]
-            current_position = self.current_positions[index]
-            if current_position == len(self.matches):
-                self.matches.append([])
+        if not has_more:
+            return False
 
-            # matched types on this position
-            matches = cast(Dict[str, List[str]], {})
-            for match, _, values in self.matches[current_position]:
-                try:
-                    matches[match.type] += values
-                except KeyError:
-                    matches[match.type] = list(values)
+        matcher = self.agenda[self.agenda_index]
+        token_index = self.token_indexes[self.agenda_index]
 
-            for type, parser in self.child_parses.items():
-                child_values = reduce(
-                    list.__add__, parser.matches[current_position].values())
-                try:
-                    matches[type] += child_values
-                except KeyError:
-                    matches[match.type] = child_values
+        while token_index < len(self.matches):
+            self.matches.append([])
 
-            if matcher.test(self.tokens[current_position], matches):
-                has_more = self.__continue_rule(
-                    index,
-                    matcher,
-                    current_position,
-                    has_more)
-            elif matcher.blocked_by_type:
-                if self.__block_cleared(
-                        matcher.blocked_by_type,
-                        index,
-                        current_position):
-                    # can the rule continue?
-                    if matcher.test(self.tokens[current_position], matches):
-                        has_more = self.__continue_rule(
-                            index,
-                            matcher, current_position,
-                            has_more)
+        # insert a new state starting from this position
+        self.states.append(PatternMatcherState(matcher, token_index))
+
+        updated_states = []
+        # tests all states for this agenda
+        for state in self.states:
+            if state.matcher != matcher or state.position > token_index:
+                updated_states.append(state)
+                continue
+            first = True
+            for span in [TokenSpan(
+                    token_index,
+                    None,
+                    [self.tokens[token_index]])] + \
+                    self.matches[token_index]:
+                if state.test(span):
+                    # no need to clone the first match
+                    next_state = state if first else state.clone()
+                    first = False
+                    if next_state.next(state):
+                        # complete!
+                        self.matches[state.start_position].append(state.emit())
                     else:
-                        # shift the match window to start on this position
-                        current_position, has_more = self.__restart_rule(
-                            index,
-                            matcher,
-                            current_position,
-                            has_more)
-                else:
-                    has_more = True
-            else:
-                current_position, has_more = self.__restart_rule(
-                    index,
-                    matcher,
-                    current_position,
-                    has_more)
+                        updated_states.append(next_state)
+        self.states = updated_states
+
+        # # if necessary: clone for all matches on this position
+        # # matches? forward
+        # # no match? remove
+
+        # # for all state
+        # for state in self.states:
+        #     blocked_by = state.blocked_by()
+        #     if blocked_by != None and not self.__block_cleared(blocked_by, state.position):
+        #         has_more = True
+        #     else:
+        #         # TODO: loop through all possible tokens and all possible
+        #         # matches
+        #         if state.position >= len(self.tokens):
+        #             for span in [TokenSpan(state.position, None, [self.tokens[state.position]])] \
+        #                     + self.matches[state.position]:
+        #                 state.test()
+
+        # has_more = False
+        # for index in range(0, len(self.agenda)):
+        #     matcher = self.agenda[index]
+        #     current_position = self.current_positions[index]
+        #     if current_position == len(self.matches):
+        #         self.matches.append([])
+
+        #     # matched types on this position
+        #     matches = cast(Dict[str, List[str]], {})
+        #     for match, _, values in self.matches[current_position]:
+        #         try:
+        #             matches[match.type] += values
+        #         except KeyError:
+        #             matches[match.type] = list(values)
+
+        #     for type, parser in self.child_parses.items():
+        #         child_values = reduce(
+        #             list.__add__, parser.matches[current_position].values())
+        #         try:
+        #             matches[type] += child_values
+        #         except KeyError:
+        #             matches[match.type] = child_values
+
+        #     if matcher.test(self.tokens[current_position], matches):
+        #         has_more = self.__continue_rule(
+        #             index,
+        #             matcher,
+        #             current_position,
+        #             has_more)
+        #     elif matcher.blocked_by_type:
+        #         if self.__block_cleared(
+        #                 matcher.blocked_by_type,
+        #                 index,
+        #                 current_position):
+        #             # can the rule continue?
+        #             if matcher.test(self.tokens[current_position], matches):
+        #                 has_more = self.__continue_rule(
+        #                     index,
+        #                     matcher, current_position,
+        #                     has_more)
+        #             else:
+        #                 # shift the match window to start on this position
+        #                 current_position, has_more = self.__restart_rule(
+        #                     index,
+        #                     matcher,
+        #                     current_position,
+        #                     has_more)
+        #         else:
+        #             has_more = True
+        #     else:
+        #         current_position, has_more = self.__restart_rule(
+        #             index,
+        #             matcher,
+        #             current_position,
+        #             has_more)
 
         return has_more
 
