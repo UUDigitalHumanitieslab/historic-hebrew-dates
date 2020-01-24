@@ -45,6 +45,7 @@ while parser.iterate():
     pass
 print(parser)
 
+print("NEXT")
 parser.reset()
 
 parser.input(["een", "februari", "en", "nog",

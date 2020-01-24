@@ -2,11 +2,12 @@ from typing import Dict, List, Union, Set, TypeVar, cast
 
 
 class TokenSpan:
-    def __init__(self, start: int, type: Union[str, None], tokens: List[str], len=None):
+    def __init__(self, start: int, type: Union[str, None], tokens: List[str], length=None, value=None):
         self.start = start
         self.type = type
         self.tokens = tokens
-        self.len = cast(int, len or len(self.tokens))
+        self.len = cast(int, length or len(tokens))
+        self.value = cast(str, value)
 
     @property
     def end(self):
@@ -22,7 +23,7 @@ class TokenPart:
         self.text = compare
 
     def test(self, span: TokenSpan) -> bool:
-        return self.text == span.text
+        return cast(bool, self.text == span.text)
 
     def __str__(self):
         return f"\"{self.type}\""
@@ -53,8 +54,8 @@ class TypePart:
         self.type = type
         self.name = name
 
-    def test(self, token: str, types: Set[str]) -> bool:
-        return self.type in types
+    def test(self, span: TokenSpan) -> bool:
+        return self.type == span.type
 
     def __str__(self):
         return f"{{{self.name}}}" if self.name == self.type else f"{{{self.name}:{self.type}}}"
@@ -78,9 +79,11 @@ class PatternMatcherState():
         self.start_position = position
         self.position = position
 
-        # contains the possible string values for each id present
+        self.spans = cast(List[TokenSpan], [])
+
+        # contains the string values for each id present
         # in this pattern
-        self.values = cast(Dict[str, List[str]], {})
+        self.values = cast(Dict[str, str], {})
 
     def blocked_by(self) -> Union[str, None]:
         """Whether this state depends on another type being parsed first.
@@ -126,29 +129,35 @@ class PatternMatcherState():
             self.values[part.name] = span.text
 
         self.index += 1
-        self.position += part.len
-        if self.index == len(self.parts):
+        self.position += span.len
+        self.spans.append(span)
+        if self.index == len(self.matcher.parts):
             return True
         return False
 
-    def emit(self) -> List[str]:
-        # TODO: emit a TokenSpan
-        outputs = cast(List[str], [self.matcher.template])
-        for id, values in self.values.items():
-            transformed = cast(List[str], [])
-            for output in outputs:
-                transformed += self.__fill_template(output, id, values)
-            outputs = transformed
-        return outputs
+    def emit(self) -> TokenSpan:
+        tokens = cast(List[str], [])
+        for span in self.spans:
+            tokens += span.tokens
+        output = self.matcher.template
+        for id, value in self.values.items():
+            output = self.__fill_template(output, id, value)
+        return TokenSpan(
+            self.start_position,
+            self.matcher.type,
+            tokens,
+            1 + self.position - self.start_position,
+            output)
 
     def clone(self: T) -> T:
         clone = PatternMatcherState(self.matcher, self.position)
         clone.index = self.index
         clone.start_position = self.start_position
         clone.values = {** self.values}
+        return cast(T, clone)
 
-    def __fill_template(self, template: str, id: str, values: List[str]) -> List[str]:
-        return [template.replace(f'{{{id}}}', value) for value in values]
+    def __fill_template(self, template: str, id: str, value: str) -> str:
+        return template.replace(f'{{{id}}}', value)
 
     def __str__(self):
         parts_str = " ".join(str(part) for part in self.matcher.parts)

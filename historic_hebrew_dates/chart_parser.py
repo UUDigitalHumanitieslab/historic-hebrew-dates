@@ -16,16 +16,15 @@ class ChartParser:
         # everything starts at zero
         self.agenda_index = 0
         self.token_indexes = cast(Dict[int, int], {})
-        for i in range(0, len(agenda)):
+        for i in range(0, len(self.agenda)):
             self.token_indexes[i] = 0
 
         self.states = cast(List[PatternMatcherState], [])
         self.tokens = cast(List[str], [])
 
-        # no matches, matches at their position
-        # containing their associated TokenSpans
-        self.matches = cast(
-            List[List[TokenSpan]], [])
+        # matches at the token start positions containing
+        # their associated TokenSpans
+        self.matches = cast(List[List[TokenSpan]], [])
 
     def input(self, tokens: List[str]):
         # start at the lowest agenda again
@@ -42,12 +41,15 @@ class ChartParser:
         """
 
         has_more = False
+
+        # move the current agenda forward
         self.token_indexes[self.agenda_index] += 1
         if self.token_indexes[self.agenda_index] < len(self.tokens):
             has_more = True
         else:
+            # try the next matcher on the agenda
             self.agenda_index += 1
-            if self.agenda_index < len(self.agenda_index):
+            if self.agenda_index < len(self.agenda):
                 has_more = True
 
         if not has_more:
@@ -56,7 +58,7 @@ class ChartParser:
         matcher = self.agenda[self.agenda_index]
         token_index = self.token_indexes[self.agenda_index]
 
-        while token_index < len(self.matches):
+        while len(self.matches) <= token_index:
             self.matches.append([])
 
         # insert a new state starting from this position
@@ -65,6 +67,8 @@ class ChartParser:
         updated_states = []
         # tests all states for this agenda
         for state in self.states:
+            # retain states for other agendas
+            # and for those which are beyond this token
             if state.matcher != matcher or state.position > token_index:
                 updated_states.append(state)
                 continue
@@ -78,7 +82,7 @@ class ChartParser:
                     # no need to clone the first match
                     next_state = state if first else state.clone()
                     first = False
-                    if next_state.next(state):
+                    if next_state.next(span):
                         # complete!
                         self.matches[state.start_position].append(state.emit())
                     else:
@@ -164,58 +168,58 @@ class ChartParser:
         while self.iterate():
             pass
 
-    def __continue_rule(self,
-                        index: int,
-                        matcher: PatternMatcher,
-                        current_position: int,
-                        has_more: bool):
-        self.current_positions[index] += 1
-        if matcher.next():
-            # completed match!
-            self.matches[self.start_positions[index]].append(
-                (matcher, current_position, matcher.emit()))
-            matcher.reset()
-            self.start_positions[index] = self.current_positions[index]
-        return self.__check_for_more(index, has_more)
+    # def __continue_rule(self,
+    #                     index: int,
+    #                     matcher: PatternMatcher,
+    #                     current_position: int,
+    #                     has_more: bool):
+    #     self.current_positions[index] += 1
+    #     if matcher.next():
+    #         # completed match!
+    #         self.matches[self.start_positions[index]].append(
+    #             (matcher, current_position, matcher.emit()))
+    #         matcher.reset()
+    #         self.start_positions[index] = self.current_positions[index]
+    #     return self.__check_for_more(index, has_more)
 
-    def __restart_rule(self, index: int, matcher: PatternMatcher, current_position: int, has_more: bool):
-        # maybe it starts at the next position?
-        current_position += 1
-        self.start_positions[index] = current_position
-        self.current_positions[index] = current_position
-        matcher.reset()
-        has_more = self.__check_for_more(index, has_more)
-        return current_position, has_more
+    # def __restart_rule(self, index: int, matcher: PatternMatcher, current_position: int, has_more: bool):
+    #     # maybe it starts at the next position?
+    #     current_position += 1
+    #     self.start_positions[index] = current_position
+    #     self.current_positions[index] = current_position
+    #     matcher.reset()
+    #     has_more = self.__check_for_more(index, has_more)
+    #     return current_position, has_more
 
-    def __check_for_more(self, index: int, has_more: bool):
-        if not has_more:
-            return self.current_positions[index] < len(self.tokens)
-        else:
-            return True
+    # def __check_for_more(self, index: int, has_more: bool):
+    #     if not has_more:
+    #         return self.current_positions[index] < len(self.tokens)
+    #     else:
+    #         return True
 
-    def __block_cleared(self, type: str, position: int):
-        for state in self.states:
-            if state.type == type and state.start_position < position:
-                return False
-        return True
-        # # determine matches which need to finish before
-        # # this is allowed to continue; only allow waiting
-        # # for preceding rules
-        # for i in range(0, rule_index):
-        #     if self.agenda[i].type == type:
-        #         if self.start_positions[i] < position:
-        #             # this is blocking
-        #             return False
-        #         elif self.start_positions[i] == position and \
-        #                 self.agenda[i].blocked_by_type:
-        #             # this block is also blocked, that has to be
-        #             # resolved first
-        #             return False
-        # return True
+    # def __block_cleared(self, type: str, position: int):
+    #     for state in self.states:
+    #         if state.type == type and state.start_position < position:
+    #             return False
+    #     return True
+    #     # # determine matches which need to finish before
+    #     # # this is allowed to continue; only allow waiting
+    #     # # for preceding rules
+    #     # for i in range(0, rule_index):
+    #     #     if self.agenda[i].type == type:
+    #     #         if self.start_positions[i] < position:
+    #     #             # this is blocking
+    #     #             return False
+    #     #         elif self.start_positions[i] == position and \
+    #     #                 self.agenda[i].blocked_by_type:
+    #     #             # this block is also blocked, that has to be
+    #     #             # resolved first
+    #     #             return False
+    #     # return True
 
     def __str__(self):
-        def format_token_matches(matches: List[Tuple[PatternMatcher, int, List[str]]]):
-            return ", ".join(f":{end_position} {pattern_matcher} -> {';'.join(values)}" for (pattern_matcher, end_position, values) in matches)
+        def format_token_matches(matches: List[TokenSpan]):
+            return ", ".join(f":{match.end} {match.type} -> {match.value}" for match in matches)
 
         formatted_tokens = (
             f"{i}:{format_token_matches(self.matches[i])}" for i in range(0, len(self.matches)))

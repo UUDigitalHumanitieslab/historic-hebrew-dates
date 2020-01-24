@@ -173,7 +173,7 @@ class PatternParser:
     def search(self, text: str):
         tokens = text.split(' ')
 
-        for parser in ([self] + self.child_patterns.values()):
+        for parser in ([self] + list(self.child_patterns.values())):
             parser.parser.reset()
             parser.parser.input(tokens)
 
@@ -189,21 +189,21 @@ class PatternParser:
 
         return self.parser.matches
 
-    def __format_position_matches(self, matches: List[Tuple[PatternMatcher, int, List[str]]]):
-        for match in matches:
-            (start, end) = match.span()
-            if start > pos:
-                yield {
-                    'text': text[pos:start]
-                }
-            pos = end
-            match_text = match.group(0)
-            yield {
-                'text': match_text,
-                'parsed': self.parse(match_text),
-                'eval': self.parse(match_text, True)
-            }
-        if pos < len(text):
-            yield {
-                'text': text[pos:]
-            }
+    # def __format_position_matches(self, matches: List[Tuple[PatternMatcher, int, List[str]]]):
+    #     for match in matches:
+    #         (start, end) = match.span()
+    #         if start > pos:
+    #             yield {
+    #                 'text': text[pos:start]
+    #             }
+    #         pos = end
+    #         match_text = match.group(0)
+    #         yield {
+    #             'text': match_text,
+    #             'parsed': self.parse(match_text),
+    #             'eval': self.parse(match_text, True)
+    #         }
+    #     if pos < len(text):
+    #         yield {
+    #             'text': text[pos:]
+    #         }
