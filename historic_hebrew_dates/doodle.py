@@ -36,7 +36,7 @@ getal_en_maand = PatternMatcher("getal_en_maand", "[dag: {dag}, maand: {maand}, 
     TypePart("maand", "maand")])
 
 parser = ChartParser(getallen + maanden + [getal_en_maand])
-parser.input(["dit", "is", "een", "januari"])
+parser.input(["dit", "is", "vier", "februari"])
 # parser.next(token)
 # print(parser.position)
 # print(parser.matches)

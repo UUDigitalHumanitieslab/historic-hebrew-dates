@@ -126,7 +126,7 @@ class PatternMatcherState():
         part = self.matcher.parts[self.index]
         if isinstance(part, TypePart):
             # assign the value for this span
-            self.values[part.name] = span.text
+            self.values[part.name] = span.value
 
         self.index += 1
         self.position += span.len
@@ -146,7 +146,7 @@ class PatternMatcherState():
             self.start_position,
             self.matcher.type,
             tokens,
-            1 + self.position - self.start_position,
+            self.position - self.start_position,
             output)
 
     def clone(self: T) -> T:
