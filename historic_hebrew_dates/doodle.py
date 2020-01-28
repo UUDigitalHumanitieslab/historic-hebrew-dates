@@ -1,5 +1,6 @@
 from historic_hebrew_dates.chart_parser import ChartParser
 from historic_hebrew_dates.pattern_matcher import TokenPart, TypePart, PatternMatcher
+from historic_hebrew_dates.tokenizer import Tokenizer
 
 getallen = [PatternMatcher(
     "getal",
@@ -31,12 +32,15 @@ maanden = [PatternMatcher(
         TokenPart("november"),
         TokenPart("december")], start=1)]
 
-getal_en_maand = PatternMatcher("getal_en_maand", "[dag: {dag}, maand: {maand}, jaar: {jaar}]", [
+getal_en_maand = PatternMatcher("getal_en_maand", "[dag: {dag}, maand: {maand}]", [
     TypePart("getal", "dag"),
     TypePart("maand", "maand")])
 
 parser = ChartParser(getallen + maanden + [getal_en_maand])
-parser.input(["dit", "is", "vier", "februari"])
+tokenizer = Tokenizer(parser.dictionary())
+tokens = list(tokenizer.tokenize("dit is vier februari"))
+
+parser.input(tokens)
 # parser.next(token)
 # print(parser.position)
 # print(parser.matches)
@@ -48,8 +52,8 @@ print(parser)
 print("NEXT")
 parser.reset()
 
-parser.input(["een", "februari", "en", "nog",
-              "een", "tekst", "een", "januari"])
+tokens = tokenizer.tokenize("een februari en nog een tekst ?ee? januari")
+parser.input(tokens)
 
 while parser.iterate():
     pass

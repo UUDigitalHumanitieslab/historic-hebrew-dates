@@ -1,4 +1,4 @@
-from typing import Dict, List, Union, Set, TypeVar, cast
+from typing import Dict, Iterator, List, Union, Set, TypeVar, cast
 
 
 class TokenSpan:
@@ -66,6 +66,15 @@ class PatternMatcher:
         self.type = type
         self.template = template
         self.parts = parts
+
+    def dictionary(self) -> Iterator[str]:
+        """Get all the tokens which are used in the pattern.
+
+        Returns:
+            Iterator[str] -- An iteration of token strings
+        """
+        return map(lambda part: part.text,
+                   (part for part in self.parts if isinstance(part, TokenPart)))
 
 
 T = TypeVar('T', bound='PatternMatcherState')
