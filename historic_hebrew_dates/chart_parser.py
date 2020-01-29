@@ -91,12 +91,10 @@ class ChartParser:
             for interpretation in self.tokens[token_index].interpretations:
                 # an ambiguous token could be resolved to multiple realizations
                 for token in interpretation:
-                    done = self.state_next(state, TokenSpan(
+                    self.state_next(state, TokenSpan(
                         token_index,
                         None,
                         [token]), updated_states, new_matches)
-                    if done:
-                        break
             for span in self.matches[token_index]:
                 self.state_next(state, span, updated_states, new_matches)
         self.states = updated_states
@@ -110,19 +108,14 @@ class ChartParser:
                    state: PatternMatcherState,
                    span: TokenSpan,
                    updated_states: List[PatternMatcherState],
-                   matches: List[PatternMatcherState]) -> bool:
+                   matches: List[PatternMatcherState]) -> None:
         if state.test(span):
             next_state = state.clone()
             if next_state.next(span):
                 # complete!
                 matches.append(next_state)
-                done = True
             else:
                 updated_states.append(next_state)
-                done = False
-        else:
-            done = True
-        return done
 
     def process_all(self):
         while self.iterate():

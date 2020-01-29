@@ -29,6 +29,7 @@ maanden = [PatternMatcher(
         TokenPart("juli"),
         TokenPart("augustus"),
         TokenPart("september"),
+        TokenPart("oktober"),
         TokenPart("november"),
         TokenPart("december")], start=1)]
 
@@ -38,8 +39,7 @@ getal_en_maand = PatternMatcher("getal_en_maand", "[dag: {dag}, maand: {maand}]"
 
 parser = ChartParser(getallen + maanden + [getal_en_maand])
 tokenizer = Tokenizer(parser.dictionary())
-tokens = list(tokenizer.tokenize("dit is vier februari"))
-
+tokens = list(tokenizer.tokenize("dit is vier februari en hier staat vijfdecember"))
 parser.input(tokens)
 # parser.next(token)
 # print(parser.position)
