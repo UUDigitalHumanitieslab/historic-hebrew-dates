@@ -167,8 +167,8 @@ class PatternParser:
         if 'words' in part:
             words = ' '.join(part['words']).lower()
             regularized_whitespace = re.sub(r'[ \t\n]+', ' ', words)
-            tokens = re.split(' -', regularized_whitespace)
-            return [TokenPart(token) for token in tokens]
+            tokens = re.split('[ -]', regularized_whitespace)
+            return [TokenPart(token) for token in tokens if token]
         else:
             if part['type'] == 'backref':
                 return [BackrefPart(part['name'])]
