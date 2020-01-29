@@ -4,7 +4,7 @@ import os
 import re
 
 from collections import ChainMap
-from typing import cast, Any, Callable, Dict, Iterable, List, Set, Tuple, Pattern, Optional
+from typing import cast, Any, Callable, Dict, Iterable, List, Set, Tuple, Pattern, Optional, TypeVar
 from functools import reduce
 
 from .grammars.pattern_grammar import get_parts
@@ -13,13 +13,14 @@ from .pattern_matcher import PatternMatcher, TokenSpan
 from .tokenizer import FragmentedToken, Tokenizer
 from historic_hebrew_dates.pattern_matcher import BackrefPart, ChildPart, TokenPart, TypePart
 
+T = TypeVar('T', bound='PatternParser')
 
 class PatternParser:
     def __init__(self,
                  filename: str,
                  type: str,
                  eval_func: Callable[[str], Any],
-                 child_patterns: List[PatternParser]=[],
+                 child_patterns: List[T] = [],
                  rows=None):
         self.type = type
         self.child_patterns = child_patterns
@@ -55,7 +56,7 @@ class PatternParser:
 
         matchers = cast(List[PatternMatcher], [])
         for pattern_type in pattern_type_order:
-            for i, (pattern, expression) in enumerate(grouped_patterns_str[pattern_type]):
+            for pattern, expression in grouped_patterns_str[pattern_type]:
                 parts = get_parts(pattern)
                 matcher = self.__compile_matcher(
                     pattern_type,
@@ -71,10 +72,10 @@ class PatternParser:
         return self.parser.dictionary() | self.child_dictionaries
 
     def search(self, text: str):
-        tokens = self.tokenizer.tokenize(text)
-        matches = self.parse(list(tokens))
+        tokens = list(self.tokenizer.tokenize(text))
+        matches = self.parse(tokens)
 
-        return list(self.__format_matches(matches))
+        return list(self.__format_matches(tokens, matches))
 
     def parse(self, tokens: List[FragmentedToken]) -> List[List[TokenSpan]]:
         self.parser.reset()
@@ -187,26 +188,24 @@ class PatternParser:
         Returns:
             PatternMatcher -- The pattern matcher to apply
         """
-        pattern = ''
         return PatternMatcher(
             pattern_type,
             expression,
             reduce(list.__add__, (self.__convert_part(part) for part in parts)))
 
     def __format_matches(self, tokens: List[FragmentedToken], matches: List[List[TokenSpan]]):
-        # TODO: Whoa, this is heavy.
-        # (...) Is there a problem with the Earth's gravitational pull?
-        pos = 0
-        current = None
+        current = cast(Dict[str, Any], {})
+        match_until = 0
 
         for i in range(0, len(tokens)):
             token = tokens[i]
-            if not matches[i]:
-                if current == None:
+            match = matches[i]
+            if not match:
+                if current == {}:
                     current = {
                         'text': token.text
                     }
-                elif 'matches' in current:
+                elif 'matches' in current and match_until < i + 1:
                     yield current
                     current = {
                         'text': token.text
@@ -216,25 +215,18 @@ class PatternParser:
             else:
                 if current:
                     yield current
+                mapped_matches = []
+                for span in match:
+                    mapped_matches.append({
+                        'parsed': span.value,
+                        'eval': self.eval(span.value)
+                    })
+                    if span.end > match_until:
+                        match_until = span.end
+
                 current = {
-                    'text': None # TODO: ohnoes!
+                    'text': token.text,
+                    'matches': mapped_matches
                 }
-        for match in matches:
-            for span in match:
-                span.start
-            (start, end) = match.span()
-            if start > pos:
-                yield {
-                    'text': text[pos:start]
-                }
-            pos = end
-            match_text = match.group(0)
-            yield {
-                'text': match_text,
-                'parsed': self.parse(match_text),
-                'eval': self.parse(match_text, True)
-            }
-        if pos < len(text):
-            yield {
-                'text': text[pos:]
-            }
+        if current:
+            yield current

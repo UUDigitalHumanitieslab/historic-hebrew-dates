@@ -20,11 +20,11 @@ class TestNumerals(unittest.TestCase):
                 reader = csv.reader(numerals)
                 for row in reader:
                     [text, expected] = row
-                    parsed = parser.parse(text)
+                    parsed = parser.search(text)
                     if not parsed:
                         self.fail(f'Parse failed for: {text} ({lang}), expected: {expected}')
                     else:
-                        evaluated = parser.eval(parsed)
+                        evaluated = parsed[0]['matches'][0]['eval']
                         self.assertEqual(
                             evaluated,
                             int(expected),

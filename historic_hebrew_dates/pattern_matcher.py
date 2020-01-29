@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List, Union, Set, TypeVar, cast
+from typing import Dict, Iterator, List, Union, Set, Tuple, TypeVar, cast
 
 
 class TokenSpan:
@@ -34,15 +34,18 @@ class TokenPart:
         return cast(bool, self.text == span.text)
 
     def __str__(self):
-        return f"\"{self.type}\""
+        return f"\"{self.text}\""
 
 
 class BackrefPart:
     def __init__(self, id: str):
         self.name = id
 
+    def test(self, span: TokenSpan) -> bool:
+        raise "Back-reference should be checked by the parser"
+
     def __str__(self):
-        return f"\"{self.name}\""
+        return f"@{self.name}"
 
 
 class ChildPart:
@@ -114,20 +117,24 @@ class PatternMatcherState():
         else:
             return None
 
-    def test(self, span: TokenSpan) -> bool:
+    def test(self, span: TokenSpan) -> Tuple[bool, bool]:
         """Test whether the current token matches the pattern.
 
         Arguments:
             span {TokenSpan} -- Span to test against for possible
                 continuation
+            matches {List[PatternMatcherState]} -- Other matches on this position
 
         Returns:
-            bool -- Whether this span matches and the pattern can continue.
+            Tuple[bool, bool] -- 0: Whether this span matches and the pattern can continue,
+                1: Whether this entails a backreference
         """
         part = self.matcher.parts[self.index]
+        if isinstance(part, BackrefPart):
+            return True, True
         if part.test(span):
-            return True
-        return False
+            return True, False
+        return False, False
 
     def next(self, span: TokenSpan) -> bool:
         """Move the index forward within the pattern using the given span.
@@ -178,4 +185,4 @@ class PatternMatcherState():
 
     def __str__(self):
         parts_str = " ".join(str(part) for part in self.matcher.parts)
-        return f"({self.type}) \"{parts_str}\""
+        return f"({self.matcher.type}) \"{parts_str}\""

@@ -20,11 +20,11 @@ class TestDates(unittest.TestCase):
             reader = csv.reader(date_types)
             for row in reader:
                 [text, expected] = row
-                parsed = parser.parse(text)
+                parsed = parser.search(text)
                 if not parsed:
                     self.fail(f'Parse failed for: {text}, expected: {expected}')
                 else:
-                    self.assertEqual(parsed, expected)
+                    self.assertEqual(parsed[0]['matches'][0]['parsed'], expected)
 
     def test_dates(self):
         def test_lang(lang, expected_filename):
@@ -37,11 +37,11 @@ class TestDates(unittest.TestCase):
                     if skip:
                         skipped += 1
                         continue
-                    expression = parser.parse(text)
+                    expression = parser.search(text)
                     if not expression:
                         self.fail(f'Parse failed for: {text}, expected: {expected}')
                     else:
-                        self.assertDictEqual(yaml.safe_load(expected), parser.parse(text, True),
+                        self.assertDictEqual(yaml.safe_load(expected), expression[0]['matches'][0]['eval'],
                             text)
             if skipped > 0:
                 print(f'SKIPPED {skipped} rows for {lang}!')

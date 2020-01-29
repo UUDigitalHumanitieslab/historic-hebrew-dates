@@ -54,7 +54,6 @@ class ChartParser:
             for match in matches[index]:
                 self.matches[index].append(match.clone(type))
 
-
     def iterate(self) -> bool:
         """Moves the current matcher one step forward, or shift to the
         next matcher
@@ -121,13 +120,26 @@ class ChartParser:
                      span: TokenSpan,
                      updated_states: List[PatternMatcherState],
                      matches: List[PatternMatcherState]) -> None:
-        if state.test(span):
-            next_state=state.clone()
-            if next_state.next(span):
-                # complete!
-                matches.append(next_state)
+        is_match, is_backref = state.test(span)
+        if is_match:
+            if is_backref:
+                for ref_span in list(matches):
+                    self.__state_next_span(
+                        state, ref_span, updated_states, matches)
             else:
-                updated_states.append(next_state)
+                self.__state_next_span(state, span, updated_states, matches)
+
+    def __state_next_span(self,
+                          state: PatternMatcherState,
+                          span: TokenSpan,
+                          updated_states: List[PatternMatcherState],
+                          matches: List[PatternMatcherState]):
+        next_state = state.clone()
+        if next_state.next(span):
+            # complete!
+            matches.append(next_state)
+        else:
+            updated_states.append(next_state)
     # def __continue_rule(self,
     #                     index: int,
     #                     matcher: PatternMatcher,
@@ -181,6 +193,6 @@ class ChartParser:
         def format_token_matches(matches: List[TokenSpan]):
             return ", ".join(f":{match.end} {match.type} -> {match.value}" for match in matches)
 
-        formatted_tokens=(
+        formatted_tokens = (
             f"{i}:{format_token_matches(self.matches[i])}" for i in range(0, len(self.matches)))
         return "\n".join(formatted_tokens)
