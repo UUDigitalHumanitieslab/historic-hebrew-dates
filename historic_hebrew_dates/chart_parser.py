@@ -8,9 +8,8 @@ T = TypeVar('T', bound='ChartParser')
 
 
 class ChartParser:
-    def __init__(self: T, agenda: List[PatternMatcher], child_parses: Dict[str, T] = None):
+    def __init__(self: T, agenda: List[PatternMatcher]):
         self.agenda = agenda
-        self.child_parses = child_parses or {}
         self.reset()
 
     def dictionary(self) -> Set[str]:
@@ -47,6 +46,15 @@ class ChartParser:
         for token in tokens:
             self.tokens.append(token)
 
+    def add_child_matches(self, type: str, matches: List[List[TokenSpan]]):
+        while len(self.matches) <= len(matches):
+            self.matches.append([])
+
+        for index in range(0, len(matches)):
+            for match in matches[index]:
+                self.matches[index].append(match.clone(type))
+
+
     def iterate(self) -> bool:
         """Moves the current matcher one step forward, or shift to the
         next matcher
@@ -79,8 +87,8 @@ class ChartParser:
         # insert a new state starting from this position
         self.states.append(PatternMatcherState(matcher, token_index))
 
-        updated_states = []
-        new_matches = []
+        updated_states = cast(List[PatternMatcherState], [])
+        new_matches = cast(List[PatternMatcherState], [])
         # tests all states for this agenda
         for state in self.states:
             # retain states for other agendas
@@ -91,12 +99,12 @@ class ChartParser:
             for interpretation in self.tokens[token_index].interpretations:
                 # an ambiguous token could be resolved to multiple realizations
                 for token in interpretation:
-                    self.state_next(state, TokenSpan(
+                    self.__state_next(state, TokenSpan(
                         token_index,
                         None,
                         [token]), updated_states, new_matches)
             for span in self.matches[token_index]:
-                self.state_next(state, span, updated_states, new_matches)
+                self.__state_next(state, span, updated_states, new_matches)
         self.states = updated_states
 
         for match in new_matches:
@@ -104,23 +112,22 @@ class ChartParser:
 
         return has_more
 
-    def state_next(self,
-                   state: PatternMatcherState,
-                   span: TokenSpan,
-                   updated_states: List[PatternMatcherState],
-                   matches: List[PatternMatcherState]) -> None:
+    def process_all(self):
+        while self.iterate():
+            pass
+
+    def __state_next(self,
+                     state: PatternMatcherState,
+                     span: TokenSpan,
+                     updated_states: List[PatternMatcherState],
+                     matches: List[PatternMatcherState]) -> None:
         if state.test(span):
-            next_state = state.clone()
+            next_state=state.clone()
             if next_state.next(span):
                 # complete!
                 matches.append(next_state)
             else:
                 updated_states.append(next_state)
-
-    def process_all(self):
-        while self.iterate():
-            pass
-
     # def __continue_rule(self,
     #                     index: int,
     #                     matcher: PatternMatcher,
@@ -174,6 +181,6 @@ class ChartParser:
         def format_token_matches(matches: List[TokenSpan]):
             return ", ".join(f":{match.end} {match.type} -> {match.value}" for match in matches)
 
-        formatted_tokens = (
+        formatted_tokens=(
             f"{i}:{format_token_matches(self.matches[i])}" for i in range(0, len(self.matches)))
         return "\n".join(formatted_tokens)

@@ -9,8 +9,10 @@ export interface Parse {
 
 export interface SearchResult {
   text: string;
-  parsed?: string;
-  eval?: string;
+  matches: {
+    parsed: string;
+    eval: string;
+  }[];
 }
 
 export type Search = {
@@ -64,11 +66,11 @@ export class ApiService {
     rows: string[][]) {
     const result = await this.httpClient.put<{ success: boolean, message: string }>(
       `/api/patterns/${lang}/${patternType}`, {
-        rows: [['type', 'pattern', 'value'], ...rows]
-      }).toPromise().catch((error) => ({
-        success: false,
-        message: error.message
-      }));
+      rows: [['type', 'pattern', 'value'], ...rows]
+    }).toPromise().catch((error) => ({
+      success: false,
+      message: error.message
+    }));
 
     if (!result.success) {
       return { success: false, error: result.message || 'Problem saving the results.' };

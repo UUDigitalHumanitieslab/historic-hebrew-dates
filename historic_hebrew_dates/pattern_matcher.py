@@ -6,16 +6,24 @@ class TokenSpan:
         self.start = start
         self.type = type
         self.tokens = tokens
-        self.len = cast(int, length or len(tokens))
+        self.length = cast(int, length or len(tokens))
         self.value = cast(str, value)
 
     @property
     def end(self):
-        return self.start + self.len
+        return self.start + self.length
 
     @property
     def text(self):
         return ' '.join(self.tokens)
+
+    def clone(self, override_type: str = None):
+        return TokenSpan(
+            self.start,
+            override_type or self.type,
+            self.tokens,
+            self.length,
+            self.value)
 
 
 class TokenPart:
@@ -138,7 +146,7 @@ class PatternMatcherState():
             self.values[part.name] = span.value
 
         self.index += 1
-        self.position += span.len
+        self.position += span.length
         self.spans.append(span)
         if self.index == len(self.matcher.parts):
             return True

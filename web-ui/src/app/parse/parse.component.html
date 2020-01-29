@@ -30,10 +30,10 @@
       <div *ngIf="searchLines" class="box search-result" [dir]="dir">
         <p *ngFor="let line of searchLines">
           <ng-container *ngFor="let part of line">
-            <span *ngIf="part.parsed !== undefined; else plain" class="is-match">
+            <span *ngIf="part.matches !== undefined && parts.matches.length; else plain" class="is-match">
               {{part.text}}
-              <span class="tag tooltip is-medium is-dark">
-                {{part.parsed}} {{dir === 'ltr' ? '→' : '←'}} {{part.eval}}
+              <span class="tag tooltip is-medium is-dark" *ngFor="let match of part.matches">
+                {{match.parsed}} {{dir === 'ltr' ? '→' : '←'}} {{match.eval}}
               </span>
             </span>
             <ng-template #plain>

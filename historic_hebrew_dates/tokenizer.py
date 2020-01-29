@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Iterable, List, Set
 import re
 
 
@@ -12,7 +12,8 @@ class Tokenizer:
     def __init__(self, dictionary: Set[str]):
         self.dictionary = dictionary
 
-    def tokenize(self, text: str):
+    # TODO: this should preserve whitespace
+    def tokenize(self, text: str) -> Iterable[FragmentedToken]:
         splitted = text.split()
         for item in splitted:
             if '?' in item or '.' in item:
@@ -38,14 +39,14 @@ class Tokenizer:
                     # yield the text as-is
                     yield FragmentedToken(item, [[item]])
 
-    def subdivide(self, item: str) -> List[str]:
+    def subdivide(self, item: str) -> Iterable[List[str]]:
         """Divide an unknown token into multiple known tokens, if possible
 
         Arguments:
             item {str} -- The text to divide
 
         Yields:
-            List[str] -- A list of tokens completely spanning the text
+            Iterable[List[str]] -- A list of tokens completely spanning the text
         """
         for candidate in self.dictionary:
             if item == candidate:
