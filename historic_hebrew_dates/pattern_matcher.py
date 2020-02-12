@@ -1,17 +1,32 @@
 from typing import Dict, Iterator, List, Union, Set, Tuple, TypeVar, cast
 
+T = TypeVar('T', bound='TokenSpan')
+
 
 class TokenSpan:
-    def __init__(self, start: int, type: Union[str, None], tokens: List[str], length=None, value=None):
+    def __init__(self,
+                 start: int,
+                 interpretation_index: int,
+                 interpretation_length: int,
+                 subtoken_index: int,
+                 last: int,
+                 last_interpretation_index: int,
+                 last_interpretation_length: int,
+                 last_subtoken_index: int,
+                 type: Union[str, None],
+                 tokens: List[str],
+                 value=None):
         self.start = start
+        self.interpretation_index = interpretation_index
+        self.interpretation_length = interpretation_length
+        self.subtoken_index = subtoken_index
+        self.last = last
+        self.last_interpretation_index = last_interpretation_index
+        self.last_interpretation_length = last_interpretation_length
+        self.last_subtoken_index = last_subtoken_index
         self.type = type
         self.tokens = tokens
-        self.length = cast(int, length or len(tokens))
         self.value = cast(str, value)
-
-    @property
-    def end(self):
-        return self.start + self.length
 
     @property
     def text(self):
@@ -20,10 +35,38 @@ class TokenSpan:
     def clone(self, override_type: str = None):
         return TokenSpan(
             self.start,
+            self.interpretation_index,
+            self.interpretation_length,
+            self.subtoken_index,
+            self.end,
+            self.last_interpretation_index,
+            self.last_interpretation_length,
+            self.last_subtoken_index,
             override_type or self.type,
             self.tokens,
-            self.length,
             self.value)
+
+    def precedes(self, following: T) -> bool:
+        """Whether this span, which could be a sub token, directly
+        precedes the passed span.
+
+        Arguments:
+            following {TokenSpan} -- Span to check
+
+        Returns:
+            bool -- Whether this directly textually precedes the passed
+                token
+        """
+
+        if self.last_subtoken_index < self.last_interpretation_length - 1:
+            # within an interpretation
+            return self.interpretation_index == following.last_interpretation_index and \
+                self.subtoken_index == following.last_subtoken_index - 1
+        elif self.last == following.start - 1:
+            # this is followed by the start of the next token
+            return following.subtoken_index == 0
+        else:
+            return False
 
 
 class TokenPart:
@@ -42,7 +85,7 @@ class BackrefPart:
         self.name = id
 
     def test(self, span: TokenSpan) -> bool:
-        raise "Back-reference should be checked by the parser"
+        raise Exception("Back-reference should be checked by the parser")
 
     def __str__(self):
         return f"@{self.name}"
@@ -92,12 +135,11 @@ T = TypeVar('T', bound='PatternMatcherState')
 
 
 class PatternMatcherState():
-    def __init__(self, matcher: PatternMatcher, position: int = 0):
+    def __init__(self, matcher: PatternMatcher):  # , position: int = 0):
         self.matcher = matcher
 
-        self.index = 0
-        self.start_position = position
-        self.position = position
+        # a matcher is a list of parts to match, this sets the index
+        self.parts_index = 0
 
         self.spans = cast(List[TokenSpan], [])
 
@@ -105,13 +147,26 @@ class PatternMatcherState():
         # in this pattern
         self.values = cast(Dict[str, str], {})
 
+    @property
+    def position(self) -> int:
+        """Current token position
+
+        Returns:
+            int -- Last inclusive(!) index of this pattern in the
+                tokenized input
+        """
+        try:
+            return self.spans[-1].last
+        except IndexError:
+            return 0
+
     def blocked_by(self) -> Union[str, None]:
         """Whether this state depends on another type being parsed first.
 
         Returns:
             Union[str, None] -- The name of the type to wait for or None.
         """
-        part = self.matcher.parts[self.index]
+        part = self.matcher.parts[self.parts_index]
         if isinstance(part, TypePart):
             return cast(Union[str, None], part.type)
         else:
@@ -129,7 +184,10 @@ class PatternMatcherState():
             Tuple[bool, bool] -- 0: Whether this span matches and the pattern can continue,
                 1: Whether this entails a backreference
         """
-        part = self.matcher.parts[self.index]
+        if len(self.spans) > 0 and not self.spans[-1].precedes(span):
+            return False, False
+
+        part = self.matcher.parts[self.parts_index]
         if isinstance(part, BackrefPart):
             return True, True
         if part.test(span):
@@ -147,15 +205,15 @@ class PatternMatcherState():
         Returns:
             bool -- Whether the pattern is complete
         """
-        part = self.matcher.parts[self.index]
+        part = self.matcher.parts[self.parts_index]
         if isinstance(part, TypePart):
             # assign the value for this span
             self.values[part.name] = span.value
 
-        self.index += 1
-        self.position += span.length
+        self.parts_index += 1
+        # self.token_position += span.length
         self.spans.append(span)
-        if self.index == len(self.matcher.parts):
+        if self.parts_index == len(self.matcher.parts):
             return True
         return False
 
@@ -166,17 +224,25 @@ class PatternMatcherState():
         output = self.matcher.template
         for id, value in self.values.items():
             output = self.__fill_template(output, id, value)
+        start = self.spans[0]
+        end = self.spans[-1]
         return TokenSpan(
-            self.start_position,
+            start.start,
+            start.interpretation_index,
+            start.interpretation_length,
+            start.subtoken_index,
+            end.last,
+            end.last_interpretation_index,
+            end.last_interpretation_length,
+            end.last_subtoken_index,
             self.matcher.type,
             tokens,
-            self.position - self.start_position,
             output)
 
     def clone(self: T) -> T:
-        clone = PatternMatcherState(self.matcher, self.position)
-        clone.index = self.index
-        clone.start_position = self.start_position
+        clone = PatternMatcherState(self.matcher)  # , self.token_position)
+        clone.parts_index = self.parts_index
+        clone.spans.extend(self.spans)
         clone.values = {** self.values}
         return cast(T, clone)
 

@@ -219,10 +219,11 @@ class PatternParser:
                 for span in match:
                     mapped_matches.append({
                         'parsed': span.value,
+                        'type': span.type,
                         'eval': self.eval(span.value)
                     })
-                    if span.end > match_until:
-                        match_until = span.end
+                    if span.last + 1> match_until:
+                        match_until = span.last + 1
 
                 current = {
                     'text': token.text,

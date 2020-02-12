@@ -1,5 +1,6 @@
 from typing import cast, List, Dict, Tuple, Set, TypeVar
 from functools import reduce
+from itertools import chain
 from .pattern_matcher import PatternMatcher
 from .tokenizer import FragmentedToken
 from historic_hebrew_dates.pattern_matcher import PatternMatcherState, TokenSpan
@@ -37,7 +38,8 @@ class ChartParser:
         self.tokens = cast(List[FragmentedToken], [])
 
         # matches at the token start positions containing
-        # their associated TokenSpans
+        # their associated TokenSpans (including
+        # position information for potential sub tokens)
         self.matches = cast(List[List[TokenSpan]], [])
 
     def input(self, tokens: List[FragmentedToken]):
@@ -83,31 +85,51 @@ class ChartParser:
         while len(self.matches) <= token_index:
             self.matches.append([])
 
-        # insert a new state starting from this position
-        self.states.append(PatternMatcherState(matcher, token_index))
-
         updated_states = cast(List[PatternMatcherState], [])
         new_matches = cast(List[PatternMatcherState], [])
+
+        # insert a new state to check whether a pattern starts from this
+        # (sub) token index
+        check_states = list(chain(
+            filter(lambda state: state.matcher == matcher and state.position == token_index,
+                   self.states),
+            [PatternMatcherState(matcher)]))
+
         # tests all states for this agenda
+        interpretations = self.tokens[token_index].interpretations
+        for interpretation_index, interpretation in enumerate(interpretations):
+            # an ambiguous token could be resolved to multiple realizations
+            for subtoken_index, subtoken in enumerate(interpretation):
+                self.__states_next(check_states + updated_states, TokenSpan(
+                    token_index,
+                    interpretation_index,
+                    len(interpretations),
+                    subtoken_index,
+                    token_index,
+                    interpretation_index,
+                    len(interpretations),
+                    subtoken_index,
+                    None,
+                    [subtoken]), updated_states, new_matches)
+
+                for span in self.matches[token_index]:
+                    if span.interpretation_index == interpretation_index and \
+                            span.subtoken_index == subtoken_index:
+                        self.__states_next(
+                            check_states + updated_states, span, updated_states, new_matches)
+
         for state in self.states:
             # retain states for other agendas
             # and for those which are beyond this token
             if state.matcher != matcher or state.position > token_index:
                 updated_states.append(state)
                 continue
-            for interpretation in self.tokens[token_index].interpretations:
-                # an ambiguous token could be resolved to multiple realizations
-                for token in interpretation:
-                    self.__state_next(state, TokenSpan(
-                        token_index,
-                        None,
-                        [token]), updated_states, new_matches)
-            for span in self.matches[token_index]:
-                self.__state_next(state, span, updated_states, new_matches)
+
         self.states = updated_states
 
         for match in new_matches:
-            self.matches[match.start_position].append(match.emit())
+            span = match.emit()
+            self.matches[span.start].append(span)
 
         return has_more
 
@@ -115,19 +137,21 @@ class ChartParser:
         while self.iterate():
             pass
 
-    def __state_next(self,
-                     state: PatternMatcherState,
-                     span: TokenSpan,
-                     updated_states: List[PatternMatcherState],
-                     matches: List[PatternMatcherState]) -> None:
-        is_match, is_backref = state.test(span)
-        if is_match:
-            if is_backref:
-                for ref_span in list(matches):
+    def __states_next(self,
+                      states: List[PatternMatcherState],
+                      span: TokenSpan,
+                      updated_states: List[PatternMatcherState],
+                      matches: List[PatternMatcherState]) -> None:
+        for state in states:
+            is_match, is_backref = state.test(span)
+            if is_match:
+                if is_backref:
+                    for match in list(matches):
+                        self.__state_next_span(
+                            state, match.emit(), updated_states, matches)
+                else:
                     self.__state_next_span(
-                        state, ref_span, updated_states, matches)
-            else:
-                self.__state_next_span(state, span, updated_states, matches)
+                        state, span, updated_states, matches)
 
     def __state_next_span(self,
                           state: PatternMatcherState,
@@ -140,58 +164,10 @@ class ChartParser:
             matches.append(next_state)
         else:
             updated_states.append(next_state)
-    # def __continue_rule(self,
-    #                     index: int,
-    #                     matcher: PatternMatcher,
-    #                     current_position: int,
-    #                     has_more: bool):
-    #     self.current_positions[index] += 1
-    #     if matcher.next():
-    #         # completed match!
-    #         self.matches[self.start_positions[index]].append(
-    #             (matcher, current_position, matcher.emit()))
-    #         matcher.reset()
-    #         self.start_positions[index] = self.current_positions[index]
-    #     return self.__check_for_more(index, has_more)
-
-    # def __restart_rule(self, index: int, matcher: PatternMatcher, current_position: int, has_more: bool):
-    #     # maybe it starts at the next position?
-    #     current_position += 1
-    #     self.start_positions[index] = current_position
-    #     self.current_positions[index] = current_position
-    #     matcher.reset()
-    #     has_more = self.__check_for_more(index, has_more)
-    #     return current_position, has_more
-
-    # def __check_for_more(self, index: int, has_more: bool):
-    #     if not has_more:
-    #         return self.current_positions[index] < len(self.tokens)
-    #     else:
-    #         return True
-
-    # def __block_cleared(self, type: str, position: int):
-    #     for state in self.states:
-    #         if state.type == type and state.start_position < position:
-    #             return False
-    #     return True
-    #     # # determine matches which need to finish before
-    #     # # this is allowed to continue; only allow waiting
-    #     # # for preceding rules
-    #     # for i in range(0, rule_index):
-    #     #     if self.agenda[i].type == type:
-    #     #         if self.start_positions[i] < position:
-    #     #             # this is blocking
-    #     #             return False
-    #     #         elif self.start_positions[i] == position and \
-    #     #                 self.agenda[i].blocked_by_type:
-    #     #             # this block is also blocked, that has to be
-    #     #             # resolved first
-    #     #             return False
-    #     # return True
 
     def __str__(self):
         def format_token_matches(matches: List[TokenSpan]):
-            return ", ".join(f":{match.end} {match.type} -> {match.value}" for match in matches)
+            return ", ".join(f":{match.last} {match.type} -> {match.value}" for match in matches)
 
         formatted_tokens = (
             f"{i}:{format_token_matches(self.matches[i])}" for i in range(0, len(self.matches)))
