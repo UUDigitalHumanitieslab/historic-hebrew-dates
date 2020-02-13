@@ -95,11 +95,15 @@ class ChartParser:
                    self.states),
             [PatternMatcherState(matcher)]))
 
+        self.__place_matches(token_index, check_states, updated_states, new_matches)
+
         # tests all states for this agenda
         interpretations = self.tokens[token_index].interpretations
         for interpretation_index, interpretation in enumerate(interpretations):
             # an ambiguous token could be resolved to multiple realizations
             for subtoken_index, subtoken in enumerate(interpretation):
+                self.__place_matches(token_index, check_states + updated_states, updated_states, new_matches)
+
                 self.__states_next(check_states + updated_states, TokenSpan(
                     token_index,
                     interpretation_index,
@@ -112,11 +116,7 @@ class ChartParser:
                     None,
                     [subtoken]), updated_states, new_matches)
 
-                for span in self.matches[token_index]:
-                    if span.interpretation_index == interpretation_index and \
-                            span.subtoken_index == subtoken_index:
-                        self.__states_next(
-                            check_states + updated_states, span, updated_states, new_matches)
+        self.__place_matches(token_index, check_states + updated_states, updated_states, new_matches)
 
         for state in self.states:
             # retain states for other agendas
@@ -137,14 +137,35 @@ class ChartParser:
         while self.iterate():
             pass
 
+    def __place_matches(self,
+        token_index: int,
+        states: List[PatternMatcherState],
+        updated_states: List[PatternMatcherState],
+        matches: List[PatternMatcherState]):
+        any_match = True
+        check_states = states
+        while any_match:
+            any_match = False
+            for span in self.matches[token_index]:
+                # could the pattern continue using an existing match on this (sub)token?
+                any_match |= self.__states_next(
+                    check_states,
+                    span,
+                    updated_states,
+                    matches)
+                check_states = updated_states
+
+
     def __states_next(self,
                       states: List[PatternMatcherState],
                       span: TokenSpan,
                       updated_states: List[PatternMatcherState],
-                      matches: List[PatternMatcherState]) -> None:
+                      matches: List[PatternMatcherState]) -> bool:
+        any_match = False
         for state in states:
             is_match, is_backref = state.test(span)
             if is_match:
+                any_match = True
                 if is_backref:
                     for match in list(matches):
                         self.__state_next_span(
@@ -152,6 +173,7 @@ class ChartParser:
                 else:
                     self.__state_next_span(
                         state, span, updated_states, matches)
+        return any_match
 
     def __state_next_span(self,
                           state: PatternMatcherState,

@@ -240,7 +240,7 @@ class PatternMatcherState():
             output)
 
     def clone(self: T) -> T:
-        clone = PatternMatcherState(self.matcher)  # , self.token_position)
+        clone = PatternMatcherState(self.matcher)
         clone.parts_index = self.parts_index
         clone.spans.extend(self.spans)
         clone.values = {** self.values}

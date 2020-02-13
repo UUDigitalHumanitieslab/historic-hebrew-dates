@@ -15,6 +15,7 @@ from historic_hebrew_dates.pattern_matcher import BackrefPart, ChildPart, TokenP
 
 T = TypeVar('T', bound='PatternParser')
 
+
 class PatternParser:
     def __init__(self,
                  filename: str,
@@ -86,82 +87,6 @@ class PatternParser:
 
         self.parser.process_all()
         return cast(List[List[TokenSpan]], self.parser.matches)
-        # if patterns is None:
-        #     patterns = cast(
-        #         List[Tuple[Pattern, Pattern, str]],
-        #         reduce((lambda x, y: x + list(y)),
-        #                self.grouped_patterns.values(), []))
-        # for (extraction_pattern, search_pattern, expression) in patterns:
-        #     match = extraction_pattern.fullmatch(text)
-        #     if match:
-        #         var_parts = ((self.__var_name(group_name), value)
-        #                      for group_name, value in match.groupdict().items())
-        #         # dictionary with the variable names, the values and the types
-        #         var_values = {
-        #             parts[0]: (value, parts[1])
-        #             for parts, value in var_parts
-        #         }
-        #         for group in re.finditer('\{(?P<var>[^\}]*)\}', expression):
-        #             var_name = group['var']
-        #             if not var_name:
-        #                 # refers to the entire text
-        #                 var_name = ''
-        #                 sub_parse = match.group(0)
-        #             else:
-        #                 try:
-        #                     (sub_text, sub_type) = var_values[var_name]
-        #                 except:
-        #                     print(var_values)
-        #                     raise IndexError(f"{expression} {var_name}")
-        #                 backref = sub_type == 'backref'
-        #                 sub_parse = None
-        #                 sub_patterns = None
-
-        #                 if backref:
-        #                     # use the other (preceding patterns) to
-        #                     # evaluate this part of the match
-        #                     pass
-        #                 elif sub_type in self.child_patterns:
-        #                     sub_parse = self.child_patterns[sub_type].parse(
-        #                         sub_text,
-        #                         evaluate)
-        #                 else:
-        #                     sub_patterns = self.grouped_patterns[sub_type]
-        #                 if sub_parse is None:
-        #                     sub_parse = self.parse(
-        #                         sub_text,
-        #                         evaluate,
-        #                         sub_patterns)
-        #                 if sub_parse is None:
-        #                     return None
-        #             expression = re.sub(
-        #                 '\{' + var_name + '\}',
-        #                 str(sub_parse),
-        #                 expression)
-        #         return self.eval(expression) if evaluate else expression
-        # return None
-
-    # def __group_name(self, var_name: str, sub_type: str):
-    #     """
-    #     Gets the group name to use for a named group expression.
-    #     """
-
-    #     return f'{self.type}__{var_name}__{sub_type}'
-
-    # def __var_name(self, group_name: str) -> Tuple[str, str]:
-    #     """
-    #     Gets the variable names from the named groups.
-    #     """
-    #     type, var_name, sub_type = group_name.split('__')
-    #     return (var_name, sub_type)
-
-    # def __merge_patterns(self, patterns: List[Pattern]) -> str:
-    #     # have the longest patterns first: try to match long patterns
-    #     # otherwise it is more likely to have multiple smaller matches
-    #     # e.g. two hundred would match 2 and 100 instead of 2*100 -> 200.
-    #     sorted = list(map(lambda p: cast(str, p.pattern), patterns))
-    #     sorted.sort(key=len, reverse=True)
-    #     return f"({'|'.join(sorted)})"
 
     def __convert_part(self, part):
         if 'words' in part:
@@ -222,7 +147,7 @@ class PatternParser:
                         'type': span.type,
                         'eval': self.eval(span.value)
                     })
-                    if span.last + 1> match_until:
+                    if span.last + 1 > match_until:
                         match_until = span.last + 1
 
                 current = {
