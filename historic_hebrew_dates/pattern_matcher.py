@@ -38,7 +38,7 @@ class TokenSpan:
             self.interpretation_index,
             self.interpretation_length,
             self.subtoken_index,
-            self.end,
+            self.last,
             self.last_interpretation_index,
             self.last_interpretation_length,
             self.last_subtoken_index,
@@ -131,7 +131,7 @@ class PatternMatcher:
                    (part for part in self.parts if isinstance(part, TokenPart)))
 
 
-T = TypeVar('T', bound='PatternMatcherState')
+U = TypeVar('U', bound='PatternMatcherState')
 
 
 class PatternMatcherState():
@@ -239,12 +239,12 @@ class PatternMatcherState():
             tokens,
             output)
 
-    def clone(self: T) -> T:
+    def clone(self: U) -> U:
         clone = PatternMatcherState(self.matcher)
         clone.parts_index = self.parts_index
         clone.spans.extend(self.spans)
         clone.values = {** self.values}
-        return cast(T, clone)
+        return cast(U, clone)
 
     def __fill_template(self, template: str, id: str, value: str) -> str:
         return template.replace(f'{{{id}}}', value)
