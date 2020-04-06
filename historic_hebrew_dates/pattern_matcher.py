@@ -160,18 +160,6 @@ class PatternMatcherState():
         except IndexError:
             return 0
 
-    def blocked_by(self) -> Union[str, None]:
-        """Whether this state depends on another type being parsed first.
-
-        Returns:
-            Union[str, None] -- The name of the type to wait for or None.
-        """
-        part = self.matcher.parts[self.parts_index]
-        if isinstance(part, TypePart):
-            return cast(Union[str, None], part.type)
-        else:
-            return None
-
     def test(self, span: TokenSpan) -> Tuple[bool, bool]:
         """Test whether the current token matches the pattern.
 

@@ -142,6 +142,11 @@ class ChartParser:
         states: List[PatternMatcherState],
         updated_states: List[PatternMatcherState],
         matches: List[PatternMatcherState]):
+        """
+        Attempt to continue the states using the existing
+        matches on this position.
+        """
+
         any_match = True
         check_states = states
         while any_match:
@@ -167,6 +172,7 @@ class ChartParser:
             if is_match:
                 any_match = True
                 if is_backref:
+                    # backref continues on all existing matches on this position
                     for match in list(matches):
                         self.__state_next_span(
                             state, match.emit(), updated_states, matches)
