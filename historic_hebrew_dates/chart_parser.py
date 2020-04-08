@@ -64,21 +64,6 @@ class ChartParser:
             bool -- Whether more parsing could be done on the data set
         """
 
-        has_more = False
-
-        # move the current agenda forward
-        self.token_indexes[self.agenda_index] += 1
-        if self.token_indexes[self.agenda_index] < len(self.tokens):
-            has_more = True
-        else:
-            # try the next matcher on the agenda
-            self.agenda_index += 1
-            if self.agenda_index < len(self.agenda):
-                has_more = True
-
-        if not has_more:
-            return False
-
         matcher = self.agenda[self.agenda_index]
         token_index = self.token_indexes[self.agenda_index]
 
@@ -91,20 +76,20 @@ class ChartParser:
         # insert a new state to check whether a pattern starts from this
         # (sub) token index
         check_states = list(chain(
-            filter(lambda state: state.matcher == matcher and state.position == token_index,
+            filter(lambda state: state.matcher == matcher and state.position + 1== token_index,
                    self.states),
             [PatternMatcherState(matcher)]))
-
-        self.__place_matches(token_index, check_states, updated_states, new_matches)
 
         # tests all states for this agenda
         interpretations = self.tokens[token_index].interpretations
         for interpretation_index, interpretation in enumerate(interpretations):
+            token_states = []
             # an ambiguous token could be resolved to multiple realizations
             for subtoken_index, subtoken in enumerate(interpretation):
-                self.__place_matches(token_index, check_states + updated_states, updated_states, new_matches)
+                self.__place_matches(
+                    token_index, check_states + token_states, token_states, new_matches)
 
-                self.__states_next(check_states + updated_states, TokenSpan(
+                self.__place_span(check_states + token_states, TokenSpan(
                     token_index,
                     interpretation_index,
                     len(interpretations),
@@ -114,9 +99,8 @@ class ChartParser:
                     len(interpretations),
                     subtoken_index,
                     None,
-                    [subtoken]), updated_states, new_matches)
-
-        self.__place_matches(token_index, check_states + updated_states, updated_states, new_matches)
+                    [subtoken]), token_states, new_matches)
+            updated_states += token_states
 
         for state in self.states:
             # retain states for other agendas
@@ -131,6 +115,20 @@ class ChartParser:
             span = match.emit()
             self.matches[span.start].append(span)
 
+        has_more = False
+
+        # move the current agenda forward
+        self.token_indexes[self.agenda_index] += 1
+        if self.token_indexes[self.agenda_index] < len(self.tokens):
+            has_more = True
+        else:
+            # try the next matcher on the agenda
+            self.agenda_index += 1
+            if self.agenda_index < len(self.agenda):
+                has_more = True
+
+        if not has_more:
+            return False
         return has_more
 
     def process_all(self):
@@ -138,58 +136,49 @@ class ChartParser:
             pass
 
     def __place_matches(self,
-        token_index: int,
-        states: List[PatternMatcherState],
-        updated_states: List[PatternMatcherState],
-        matches: List[PatternMatcherState]):
+                        token_index: int,
+                        states: List[PatternMatcherState],
+                        updated_states: List[PatternMatcherState],
+                        new_matches: List[PatternMatcherState]):
         """
         Attempt to continue the states using the existing
         matches on this position.
         """
 
-        any_match = True
-        check_states = states
-        while any_match:
-            any_match = False
-            for span in self.matches[token_index]:
-                # could the pattern continue using an existing match on this (sub)token?
-                any_match |= self.__states_next(
-                    check_states,
-                    span,
-                    updated_states,
-                    matches)
-                check_states = updated_states
+        for span in self.matches[token_index]:
+            # could the pattern continue using an existing match on this (sub)token?
+            self.__place_span(
+                states,
+                span,
+                updated_states,
+                new_matches)
 
-
-    def __states_next(self,
-                      states: List[PatternMatcherState],
-                      span: TokenSpan,
-                      updated_states: List[PatternMatcherState],
-                      matches: List[PatternMatcherState]) -> bool:
-        any_match = False
+    def __place_span(self,
+                     states: List[PatternMatcherState],
+                     span: TokenSpan,
+                     updated_states: List[PatternMatcherState],
+                     new_matches: List[PatternMatcherState]):
         for state in states:
             is_match, is_backref = state.test(span)
             if is_match:
-                any_match = True
                 if is_backref:
                     # backref continues on all existing matches on this position
-                    for match in list(matches):
-                        self.__state_next_span(
-                            state, match.emit(), updated_states, matches)
+                    for match in list(new_matches):
+                        self.__state_next(
+                            state, match.emit(), updated_states, new_matches)
                 else:
-                    self.__state_next_span(
-                        state, span, updated_states, matches)
-        return any_match
+                    self.__state_next(
+                        state, span, updated_states, new_matches)
 
-    def __state_next_span(self,
-                          state: PatternMatcherState,
-                          span: TokenSpan,
-                          updated_states: List[PatternMatcherState],
-                          matches: List[PatternMatcherState]):
+    def __state_next(self,
+                     state: PatternMatcherState,
+                     span: TokenSpan,
+                     updated_states: List[PatternMatcherState],
+                     new_matches: List[PatternMatcherState]):
         next_state = state.clone()
         if next_state.next(span):
             # complete!
-            matches.append(next_state)
+            new_matches.append(next_state)
         else:
             updated_states.append(next_state)
 
