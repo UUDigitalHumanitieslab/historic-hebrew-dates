@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.com/UUDigitalHumanitieslab/historic-hebrew-dates.svg?token=gbE1yWiPSuz64uDZEWzs&branch=develop)](https://travis-ci.com/UUDigitalHumanitieslab/historic-hebrew-dates)
 
+WARNING: this library is very rough around the edges
+
 # Historic Hebrew Dates
 
 Python library and console application for extracting Hebrew and Aramaic dates from historic texts. It includes a graphical editor to specify, modify and test the search patterns.
@@ -70,7 +72,7 @@ These different formats can be matched using a list of patterns:
 
 Patterns can also be derived automatically using an annotated corpus (see `annotated_corpus.py`).
 
-The patterns are regular expressions with an extention to reference other patterns. Those references consist of a name (e.g. `month`, `day`, `year`) and a type (`number`, `ordinal`, `month`...). It is also possible to reference to preceding patterns by their type name or all preceding patterns using a numbered reference (e.g. `{1}`).
+The patterns are text strings with optional placeholder references for other patterns. Those references consist of a name (e.g. `month`, `day`, `year`) and a type (`number`, `ordinal`, `month`...). It is also possible to reference to preceding patterns by their type name or all preceding patterns using a numbered reference (e.g. `{1}`).
 
 The matched values are then available for the expression, which can be evaluated using the evaluation function which has been specified for the pattern type.
 
@@ -90,8 +92,11 @@ For example for numbers:
 
 This could match and evaluate forty-two.
 
-During parse all the patterns are matched against the text until one matches.
-Searching is done using a merge of all the patterns into a single regular expression. All matches are then parsed using the pattern list.
+The text is tokenized using all the tokens found in the patterns. If a word is of an unknown token, the system will try to split it up in multiple tokens. This way it can work with words which are written together.
+
+It is also possible to specify in the search text that parts are missing by using a question mark. Those will be filled with all the possible known tokens.
+
+Search is then done using a chart parser. The parser goes through all the patterns, matches them against all the possible (sub) token interpretations and finally returns all the possible matches.
 
 The patterns are specified in `historic_hebrew_dates/patterns` and can be edited using a graphical web interface.
 
