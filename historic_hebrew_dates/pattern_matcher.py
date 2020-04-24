@@ -240,8 +240,6 @@ class PatternMatcherState():
             return False, False
 
         part = self.matcher.parts[self.parts_index]
-        # if isinstance(part, BackrefPart):
-        #     return True, True
         if part.test(span):
             return True, False
         return False, False
