@@ -78,13 +78,13 @@ class PatternParser:
 
         return list(self.__format_matches(tokens, matches))
 
-    def parse(self, tokens: Union[List[str], List[FragmentedToken]], omit_captured=True, hide_overlap=True, eval_values=True) -> List[List[TokenSpan]]:
+    def parse(self, tokens: Union[str, List[FragmentedToken]], omit_captured=True, hide_overlap=True, eval_values=True) -> List[List[TokenSpan]]:
         self.parser.reset()
 
         if type(tokens) is str:
-            tokens = list(self.tokenizer.tokenize(tokens))
+            tokens = list(self.tokenizer.tokenize(cast(str, tokens)))
 
-        self.parser.input(tokens)
+        self.parser.input(cast(List[FragmentedToken], tokens))
 
         for child in self.child_patterns:
             self.parser.add_child_matches(child.type, child.parse(tokens))
