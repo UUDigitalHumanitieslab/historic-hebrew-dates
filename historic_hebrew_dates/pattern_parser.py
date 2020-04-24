@@ -4,7 +4,7 @@ import os
 import re
 
 from collections import ChainMap
-from typing import cast, Any, Callable, Dict, Iterable, List, Set, Tuple, Pattern, Optional, TypeVar
+from typing import cast, Any, Callable, Dict, Iterable, List, Set, Tuple, Union, Pattern, Optional, TypeVar
 from functools import reduce
 
 from .grammars.pattern_grammar import get_parts
@@ -78,8 +78,12 @@ class PatternParser:
 
         return list(self.__format_matches(tokens, matches))
 
-    def parse(self, tokens: List[FragmentedToken], omit_captured=True, hide_overlap=True, eval_values=True) -> List[List[TokenSpan]]:
+    def parse(self, tokens: Union[List[str], List[FragmentedToken]], omit_captured=True, hide_overlap=True, eval_values=True) -> List[List[TokenSpan]]:
         self.parser.reset()
+
+        if type(tokens) is str:
+            tokens = list(self.tokenizer.tokenize(tokens))
+
         self.parser.input(tokens)
 
         for child in self.child_patterns:

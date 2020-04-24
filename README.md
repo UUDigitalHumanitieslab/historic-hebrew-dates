@@ -21,10 +21,8 @@ from historic_hebrew_dates import create_parsers
 hebrew = create_parsers('hebrew')
 
 result = hebrew['numerals'].parse('שבע מאות וחמישים וארבע')
-print(result) # ((7*100+5*10)+4)
-
-result = hebrew['numerals'].parse('שבע מאות וחמישים וארבע', True)
-print(result) # 754
+print(result[0][0].value) # ((7*100+5*10)+4)
+print(result[0][0].evaluated) # 754
 ```
 
 # Getting the Editor to Work
