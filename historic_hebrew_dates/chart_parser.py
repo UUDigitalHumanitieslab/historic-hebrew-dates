@@ -54,7 +54,7 @@ class ChartParser:
 
         for index in range(0, len(matches)):
             for match in matches[index]:
-                self.matches[index].append(match.clone(type))
+                self.matches[index].append(match.clone(type, True))
 
     def iterate(self) -> bool:
         """Moves the current matcher one step forward, or shift to the
@@ -71,32 +71,37 @@ class ChartParser:
             self.matches.append([])
 
         updated_states = cast(List[PatternMatcherState], [])
-        new_matches = cast(List[PatternMatcherState], [])
+        new_matches = cast(List[TokenSpan], [])
 
         # insert a new state to check whether a pattern starts from this
         # (sub) token index
         check_states = list(chain(
-            filter(lambda state: state.matcher == matcher and state.position + 1== token_index,
+            filter(lambda state: state.matcher == matcher and state.position + 1 == token_index,
                    self.states),
             [PatternMatcherState(matcher)]))
 
         # tests all states for this agenda
         interpretations = self.tokens[token_index].interpretations
         for interpretation_index, interpretation in enumerate(interpretations):
-            token_states = []
+            token_states = cast(List[PatternMatcherState], [])
             # an ambiguous token could be resolved to multiple realizations
             for subtoken_index, subtoken in enumerate(interpretation):
                 self.__place_matches(
-                    token_index, check_states + token_states, token_states, new_matches)
+                    token_index,
+                    interpretation_index,
+                    subtoken_index,
+                    check_states + token_states,
+                    token_states,
+                    new_matches)
 
                 self.__place_span(check_states + token_states, TokenSpan(
                     token_index,
                     interpretation_index,
-                    len(interpretations),
+                    len(interpretation),
                     subtoken_index,
                     token_index,
                     interpretation_index,
-                    len(interpretations),
+                    len(interpretation),
                     subtoken_index,
                     None,
                     [subtoken]), token_states, new_matches)
@@ -105,15 +110,14 @@ class ChartParser:
         for state in self.states:
             # retain states for other agendas
             # and for those which are beyond this token
-            if state.matcher != matcher or state.position > token_index:
+            if state.matcher != matcher or state.position >= token_index:
                 updated_states.append(state)
                 continue
 
         self.states = updated_states
 
         for match in new_matches:
-            span = match.emit()
-            self.matches[span.start].append(span)
+            self.matches[match.start].append(match)
 
         has_more = False
 
@@ -137,27 +141,31 @@ class ChartParser:
 
     def __place_matches(self,
                         token_index: int,
+                        interpretation_index: int,
+                        subtoken_index: int,
                         states: List[PatternMatcherState],
                         updated_states: List[PatternMatcherState],
-                        new_matches: List[PatternMatcherState]):
+                        new_matches: List[TokenSpan]):
         """
         Attempt to continue the states using the existing
         matches on this position.
         """
 
         for span in self.matches[token_index]:
-            # could the pattern continue using an existing match on this (sub)token?
-            self.__place_span(
-                states,
-                span,
-                updated_states,
-                new_matches)
+            if span.interpretation_index == interpretation_index and \
+                    span.subtoken_index == subtoken_index:
+                # could the pattern continue using an existing match on this (sub)token?
+                self.__place_span(
+                    states,
+                    span,
+                    updated_states,
+                    new_matches)
 
     def __place_span(self,
                      states: List[PatternMatcherState],
                      span: TokenSpan,
                      updated_states: List[PatternMatcherState],
-                     new_matches: List[PatternMatcherState]):
+                     new_matches: List[TokenSpan]):
         for state in states:
             is_match, is_backref = state.test(span)
             if is_match:
@@ -165,7 +173,7 @@ class ChartParser:
                     # backref continues on all existing matches on this position
                     for match in list(new_matches):
                         self.__state_next(
-                            state, match.emit(), updated_states, new_matches)
+                            state, match, updated_states, new_matches)
                 else:
                     self.__state_next(
                         state, span, updated_states, new_matches)
@@ -174,11 +182,11 @@ class ChartParser:
                      state: PatternMatcherState,
                      span: TokenSpan,
                      updated_states: List[PatternMatcherState],
-                     new_matches: List[PatternMatcherState]):
+                     new_matches: List[TokenSpan]):
         next_state = state.clone()
         if next_state.next(span):
             # complete!
-            new_matches.append(next_state)
+            new_matches.append(next_state.emit())
         else:
             updated_states.append(next_state)
 

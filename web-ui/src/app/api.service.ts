@@ -9,7 +9,7 @@ export interface Parse {
 
 export interface SearchResult {
   text: string;
-  matches: {
+  matches?: {
     parsed: string;
     eval: string;
   }[];
@@ -99,9 +99,42 @@ export class ApiService {
     patternType: string,
     input: string,
     rows: string[][]) {
-    return this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
-      input,
-      rows
-    }).toPromise().catch(() => ({ result: 'Technical problem during search.', error: true }));
+    let search: Search;
+    try {
+      search = await this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
+        input,
+        rows
+      }).toPromise();
+    } catch {
+      return { result: 'Technical problem during search.', error: true };
+    }
+    console.log(search);
+    return {
+      ...search,
+      result: (search.result as SearchResult[]).map(result => this.formatResult(result))
+    };
+  }
+
+  private formatResult(result: SearchResult) {
+    if (result.matches) {
+      return {
+        ...result,
+        matches: result.matches.map(match => ({
+          match,
+          eval: this.formatValue(match.eval),
+          parsed: this.formatValue(match.parsed)
+        }))
+      };
+    }
+
+    return result;
+  }
+
+  private formatValue(value: any): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return JSON.stringify(value);
   }
 }

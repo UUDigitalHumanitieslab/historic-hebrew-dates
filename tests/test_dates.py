@@ -47,4 +47,4 @@ class TestDates(unittest.TestCase):
                 print(f'SKIPPED {skipped} rows for {lang}!')
 
         test_lang('dutch', 'dutch_dates.csv')
-        test_lang('hebrew', 'hebrew_dates.csv')
+        #test_lang('hebrew', 'hebrew_dates.csv')

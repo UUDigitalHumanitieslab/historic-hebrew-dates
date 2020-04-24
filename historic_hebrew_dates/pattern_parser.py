@@ -78,7 +78,7 @@ class PatternParser:
 
         return list(self.__format_matches(tokens, matches))
 
-    def parse(self, tokens: List[FragmentedToken]) -> List[List[TokenSpan]]:
+    def parse(self, tokens: List[FragmentedToken], omit_captured=True, hide_overlap=True, eval_values=True) -> List[List[TokenSpan]]:
         self.parser.reset()
         self.parser.input(tokens)
 
@@ -86,7 +86,50 @@ class PatternParser:
             self.parser.add_child_matches(child.type, child.parse(tokens))
 
         self.parser.process_all()
-        return cast(List[List[TokenSpan]], self.parser.matches)
+        matches = self.parser.matches
+        if omit_captured:
+            matches = list(map(
+                lambda token_matches: list(filter(
+                    lambda match: not match.is_captured, token_matches)),
+                matches))
+        if hide_overlap:
+            matches = self.__hide_overlap(matches)
+        if eval_values:
+            for token_matches in matches:
+                for match in token_matches:
+                    if not match.is_child:
+                        match.evaluated = self.eval(match.value)
+        return cast(List[List[TokenSpan]], matches)
+
+    def __hide_overlap(self, matches: List[List[TokenSpan]]):
+        """Hide matches which are fully overlapped by another match
+
+        Arguments:
+            matches {List[List[TokenSpan]]} -- matches to filter
+
+        Returns:
+            List[List[TokenSpan]] -- Filtered matches
+        """
+
+        filtered_matches = list(matches)
+
+        for token_matches in filtered_matches:
+            for match in list(token_matches):
+                if match in token_matches:
+                    # don't run the check if this match has already been removed
+                    self.__remove_overlapping(filtered_matches, match)
+
+        return filtered_matches
+
+    def __remove_overlapping(self, matches: List[List[TokenSpan]], match: TokenSpan) -> None:
+        for token_index in range(match.start, match.last + 1):
+            token_matches = matches[token_index]
+            for candidate in list(token_matches):
+                if match != candidate and candidate in token_matches \
+                        and match.contains(candidate) \
+                        and (match.len > candidate.len
+                             or match.text == candidate.text):
+                    token_matches.remove(candidate)
 
     def __convert_part(self, part):
         if 'words' in part:
@@ -131,6 +174,9 @@ class PatternParser:
                         'text': token.text
                     }
                 elif 'matches' in current and match_until < i + 1:
+                    for current_match in current['matches']:
+                        if current_match['interpretation'] == current['text']:
+                            del current_match['interpretation']
                     yield current
                     current = {
                         'text': token.text
@@ -145,7 +191,8 @@ class PatternParser:
                     mapped_matches.append({
                         'parsed': span.value,
                         'type': span.type,
-                        'eval': self.eval(span.value)
+                        'eval': span.evaluated,
+                        'interpretation': span.text
                     })
                     if span.last + 1 > match_until:
                         match_until = span.last + 1
