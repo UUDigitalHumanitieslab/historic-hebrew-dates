@@ -10,7 +10,10 @@ class FragmentedToken:
 
 class Tokenizer:
     def __init__(self, dictionary: Set[str]):
-        self.dictionary = dictionary
+        # search for keys, case insensitively
+        self.dictionary = {
+            item.casefold(): item for item in dictionary
+        }
 
     # TODO: this should preserve whitespace
     def tokenize(self, text: str) -> Iterable[FragmentedToken]:
@@ -19,16 +22,16 @@ class Tokenizer:
             if '?' in item or '.' in item:
                 # basic implementation, only supports wildcards and single tokens
                 test = re.compile(
-                    '^' + item.replace('?', '.').replace('.', '.*') + '$')
+                    '^' + item.replace('?', '.').replace('.', '.*') + '$', re.IGNORECASE)
                 interpretations = []
                 for candidate in self.dictionary:
                     if test.search(candidate):
                         interpretations.append([candidate])
                 if interpretations:
                     yield FragmentedToken(item, interpretations)
-            elif item in self.dictionary:
+            elif item.casefold() in self.dictionary:
                 # known text
-                yield FragmentedToken(item, [[item]])
+                yield FragmentedToken(item, [[self.dictionary[item.casefold()]]])
             else:
                 # see if this token could be splitted into multiple
                 # tokens
@@ -48,9 +51,10 @@ class Tokenizer:
         Yields:
             Iterable[List[str]] -- A list of tokens completely spanning the text
         """
-        for candidate in self.dictionary:
-            if item == candidate:
+        for (casefold_candidate, candidate) in self.dictionary.items():
+            casefold_item = item.casefold()
+            if casefold_item == casefold_candidate:
                 yield [candidate]
-            elif item.startswith(candidate):
-                for additional in self.subdivide(item[len(candidate):]):
+            elif casefold_item.startswith(casefold_candidate):
+                for additional in self.subdivide(casefold_item[len(casefold_candidate):]):
                     yield [candidate] + additional
