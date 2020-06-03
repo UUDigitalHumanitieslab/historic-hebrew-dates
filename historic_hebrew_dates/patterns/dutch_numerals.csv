@@ -1,6 +1,18 @@
 ﻿type,pattern,value
-cijfers,\d+,{}
-getal,[Eé]én,1
+digit,0,0
+digit,1,1
+digit,2,2
+digit,3,3
+digit,4,4
+digit,5,5
+digit,6,6
+digit,7,7
+digit,8,8
+digit,9,9
+digits,{a:digit}{b:digit},{a}{b}
+digits,{a:digits}{b:digit},{a}{b}
+digits,{a:digits}{b:digits},{a}{b}
+getal,één,1
 getal,een,1
 getal,twee,2
 getal,drie,3
@@ -15,7 +27,7 @@ tien,elf,11
 tien,twaalf,12
 tien,dertien,13
 tien,veertien,14
-tien,{getal}tien,(10+{getal})
+tien,{getal} tien,(10+{getal})
 tienvoud,twintig,20
 tienvoud,dertig,30
 tienvoud,veertig,40
@@ -24,25 +36,25 @@ tienvoud,zestig,60
 tienvoud,zeventig,70
 tienvoud,tachtig,80
 tienvoud,negentig,90
-tienen,{getal} ?en ?{tienvoud},({getal}+{tienvoud})
+tienen,{getal} en {tienvoud},({getal}+{tienvoud})
 honderd,honderd,100
-honderd,{getal}[ -]?honderd,{getal}*100
-honderd,{cijfers}[ -]?honderd,{cijfers}*100
-honderd,{tienen}[ -]?honderd,({tienen}*100)
-honderden,{honderd}[ -]?{getal},({honderd}+{getal})
-honderden,{honderd} ?en ?{getal},({honderd}+{getal})
-honderden,{honderd}[ -]?{tien},({honderd}+{tien})
-honderden,{honderd} ?en ?{tien},({honderd}+{tien})
-honderden,{honderd}[ -]?{tienvoud},({honderd}+{tienvoud})
-honderden,{honderd} ?en ?{tienvoud},({honderd}+{tienvoud})
-honderden,{honderd}[ -]?{tienen},({honderd}+{tienen})
-honderden,{honderd} ?en ?{tienen},({honderd}+{tienen})
+honderd,{getal} honderd,{getal}*100
+honderd,{cijfers} honderd,{cijfers}*100
+honderd,{tienen} honderd,({tienen}*100)
+honderden,{honderd} {getal},({honderd}+{getal})
+honderden,{honderd} en {getal},({honderd}+{getal})
+honderden,{honderd} {tien},({honderd}+{tien})
+honderden,{honderd} en {tien},({honderd}+{tien})
+honderden,{honderd} {tienvoud},({honderd}+{tienvoud})
+honderden,{honderd} en {tienvoud},({honderd}+{tienvoud})
+honderden,{honderd} {tienen},({honderd}+{tienen})
+honderden,{honderd} en {tienen},({honderd}+{tienen})
 duizend,duizend,1000
-duizend,{tien}[ -]?honderd,{tien}*100
-duizend,{1}[ -]?duizend,{1}*1000
-duizenden,{duizend}[ -]?{1},({duizend}+{1})
-duizenden,{duizend} ?en ?{1},({duizend}+{1})
-duizenden,{tien}[ -]?{getal},({tien}*100+{getal})
-duizenden,{groot:tien}[ -]?{klein:tien},({groot}*100+{klein})
-duizenden,{tien}[ -]?{tienvoud},({tien}*100+{tienvoud})
-duizenden,{tien}[ -]?{tienen},({tien}*100+{tienen})
+duizend,{tien} honderd,{tien}*100
+duizend,{1} duizend,{1}*1000
+duizenden,{duizend} {1},({duizend}+{1})
+duizenden,{duizend} en {1},({duizend}+{1})
+duizenden,{tien} {getal},({tien}*100+{getal})
+duizenden,{groot:tien} {klein:tien},({groot}*100+{klein})
+duizenden,{tien} {tienvoud},({tien}*100+{tienvoud})
+duizenden,{tien} {tienen},({tien}*100+{tienen})

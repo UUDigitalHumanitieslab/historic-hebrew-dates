@@ -21,10 +21,11 @@ def main(args=None):
             initial_patterns()
         else:
             parser = NumeralParser()
-            expression = parser.parse(text)
-            print(expression)
-            evaluated = parser.eval(expression)
-            print(evaluated)
+            result = parser.parse(text)
+            for token_matches in result:
+                for match in token_matches:
+                    print(match.value)
+                    print(match.evaluated)
 
 
 def initial_patterns():

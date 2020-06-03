@@ -9,8 +9,10 @@ export interface Parse {
 
 export interface SearchResult {
   text: string;
-  parsed?: string;
-  eval?: string;
+  matches?: {
+    parsed: string;
+    eval: string;
+  }[];
 }
 
 export type Search = {
@@ -64,11 +66,11 @@ export class ApiService {
     rows: string[][]) {
     const result = await this.httpClient.put<{ success: boolean, message: string }>(
       `/api/patterns/${lang}/${patternType}`, {
-        rows: [['type', 'pattern', 'value'], ...rows]
-      }).toPromise().catch((error) => ({
-        success: false,
-        message: error.message
-      }));
+      rows: [['type', 'pattern', 'value'], ...rows]
+    }).toPromise().catch((error) => ({
+      success: false,
+      message: error.message
+    }));
 
     if (!result.success) {
       return { success: false, error: result.message || 'Problem saving the results.' };
@@ -97,9 +99,42 @@ export class ApiService {
     patternType: string,
     input: string,
     rows: string[][]) {
-    return this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
-      input,
-      rows
-    }).toPromise().catch(() => ({ result: 'Technical problem during search.', error: true }));
+    let search: Search;
+    try {
+      search = await this.httpClient.post<Search>(`/api/search/${lang}/${patternType}`, {
+        input,
+        rows
+      }).toPromise();
+    } catch {
+      return { result: 'Technical problem during search.', error: true };
+    }
+    console.log(search);
+    return {
+      ...search,
+      result: (search.result as SearchResult[]).map(result => this.formatResult(result))
+    };
+  }
+
+  private formatResult(result: SearchResult) {
+    if (result.matches) {
+      return {
+        ...result,
+        matches: result.matches.map(match => ({
+          match,
+          eval: this.formatValue(match.eval),
+          parsed: this.formatValue(match.parsed)
+        }))
+      };
+    }
+
+    return result;
+  }
+
+  private formatValue(value: any): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return JSON.stringify(value);
   }
 }
