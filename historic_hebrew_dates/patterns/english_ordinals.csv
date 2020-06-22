@@ -1,25 +1,26 @@
 ﻿type,pattern,value
-word,first,1
-word,second,2
-word,third,3
-word,fourth,4
-word,fifth,5
-word,sixth,6
-word,seventh,7
-word,eight,8
-word,ninth,9
-word,tenth,10
-word,twelfth,12
-word,twentieth,20
-word,thirtieth,30
-word,fortieth,40
-word,fiftieth,50
-word,sixtieth,60
-word,seventieth,70
-word,eightieth,80
-word,ninetieth,90
+single,first,1
+single,second,2
+single,third,3
+single,fourth,4
+single,fifth,5
+single,sixth,6
+single,seventh,7
+single,eight,8
+single,ninth,9
+tenth,tenth,10
+tenth,twelfth,12
+tenth,twentieth,20
+tenth,thirtieth,30
+tenth,fortieth,40
+tenth,fiftieth,50
+tenth,sixtieth,60
+tenth,seventieth,70
+tenth,eightieth,80
+tenth,ninetieth,90
 suffix,{number}th,{number}
 suffix,{number}rd,{number}
 suffix,{number}nd,{number}
 suffix,{number}st,{number}
-composed,{number}( and | ?){word},({number}+{word})
+composed,{number} {single},({number}+{single})
+composed,{number} and {single},({number}+{single})
