@@ -24,27 +24,27 @@ tenfold,sixty,60
 tenfold,seventy,70
 tenfold,eighty,80
 tenfold,ninety,90
-tens,{tenfold}[ -]?{one},({one}+{tenfold})
+tens,{tenfold} {one},({one}+{tenfold})
 tens,{tenfold},{tenfold}
 tens,{ten},{ten}
 hundred,hundred,100
-hundred,{one}[ -]?hundred,{one}*100
-hundred,{digits}[ -]?hundred,{digits}*100
-hundred,{tens}[ -]?hundred,({tens}*100)
-hundreds,{hundred}[ -]?{one},({hundred}+{one})
-hundreds,{hundred} ?and ?{one},({hundred}+{one})
-hundreds,{hundred}[ -]?{ten},({hundred}+{ten})
-hundreds,{hundred} ?and ?{ten},({hundred}+{ten})
-hundreds,{hundred}[ -]?{tenfold},({hundred}+{tenfold})
-hundreds,{hundred} ?and ?{tenfold},({hundred}+{tenfold})
-hundreds,{hundred}[ -]?{tens},({hundred}+{tens})
-hundreds,{hundred} ?en ?{tens},({hundred}+{tens})
+hundred,{one} hundred,{one}*100
+hundred,{digits} hundred,{digits}*100
+hundred,{tens} hundred,({tens}*100)
+hundreds,{hundred} {one},({hundred}+{one})
+hundreds,{hundred} and {one},({hundred}+{one})
+hundreds,{hundred} {ten},({hundred}+{ten})
+hundreds,{hundred} and {ten},({hundred}+{ten})
+hundreds,{hundred} {tenfold},({hundred}+{tenfold})
+hundreds,{hundred} and {tenfold},({hundred}+{tenfold})
+hundreds,{hundred} {tens},({hundred}+{tens})
+hundreds,{hundred} and {tens},({hundred}+{tens})
 thousand,thousand,1000
-thousand,{ten}[ -]?hundred,{ten}*100
-thousand,{1}[ -]?thousand,{1}*1000
-thousands,{thousand}[ -]?{1},({thousand}+{1})
-thousands,{thousand} ?and ?{1},({thousand}+{1})
-thousands,{ten}[ -]?{one},({ten}*100+{one})
-thousands,{big:tens}[ -]?{small:tens},({big}*100+{small})
-thousands,{ten}[ -]?{tenfold},({ten}*100+{tenfold})
-thousands,{ten}[ -]?{tens},({ten}*100+{tens})
+thousand,{ten} hundred,{ten}*100
+thousand,{1} thousand,{1}*1000
+thousands,{thousand} {1},({thousand}+{1})
+thousands,{thousand} and {1},({thousand}+{1})
+thousands,{ten} {one},({ten}*100+{one})
+thousands,{big:tens} {small:tens},({big}*100+{small})
+thousands,{ten} {tenfold},({ten}*100+{tenfold})
+thousands,{ten} {tens},({ten}*100+{tens})
